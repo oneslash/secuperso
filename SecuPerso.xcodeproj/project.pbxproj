@@ -1,0 +1,557 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		021AAB3D551435DE4F18A0BB /* LocalNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83FF9330B747D05915546A61 /* LocalNotificationManager.swift */; };
+		16D05168B48FB247E2700F62 /* SecuPersoData in Frameworks */ = {isa = PBXBuildFile; productRef = 09190AF84FB78D245F0341EA /* SecuPersoData */; };
+		171C338D9E6349C9C7FE5F06 /* FixtureDataLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C382CC4959732A92D2F3C27B /* FixtureDataLoaderTests.swift */; };
+		18BE1C7463ABBFF70704C6F9 /* providers.json in Resources */ = {isa = PBXBuildFile; fileRef = 16B5446C6FB4318C033DDE4F /* providers.json */; };
+		5458B876877E3E482D8304F5 /* MockProviderConnectionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D60C7162F15B7E5672C674A /* MockProviderConnectionServiceTests.swift */; };
+		6261497CB9E0DF4744C879AE /* SecuPersoFeatures in Frameworks */ = {isa = PBXBuildFile; productRef = E7FC27C9AA8011686B0D9B17 /* SecuPersoFeatures */; };
+		6AA10D9679D39B47D6ED6EC9 /* login_events.json in Resources */ = {isa = PBXBuildFile; fileRef = F25C5DFE5FF1F5464083A1AF /* login_events.json */; };
+		6CB0C2DFB738CDAB8C7FFD7D /* SecuPersoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 919F8D27AA4524BB37E0C15E /* SecuPersoApp.swift */; };
+		747C5A0293C6C2CA94618CEC /* SecuPersoDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 59B25A32E2BE5A1FEA68949A /* SecuPersoDomain */; };
+		796418BF1D6984EE7E5E6A6E /* HaveIBeenPwnedExposureMonitoringServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F2C40E6DBF7D94BB64FD8B /* HaveIBeenPwnedExposureMonitoringServiceTests.swift */; };
+		802C9A1FDCF6D59791514124 /* SecuPersoDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 2BFE82322F887FD5757A0022 /* SecuPersoDomain */; };
+		932E59DB2BD87C7F71708C06 /* SecuPersoFeatures in Frameworks */ = {isa = PBXBuildFile; productRef = A6AA6045C7C2C7C7568FB7E0 /* SecuPersoFeatures */; };
+		9B9C878F727D807F1A065BBF /* SecuPersoData in Frameworks */ = {isa = PBXBuildFile; productRef = AA1F2A48D6C787D8EA1C248E /* SecuPersoData */; };
+		BA9B882F943001C4928D866D /* exposures.json in Resources */ = {isa = PBXBuildFile; fileRef = 5014F6DEB10C168CEF4A76AC /* exposures.json */; };
+		C9ACE4D924E188FDFC94C928 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27C68A75398E40D17096CB9A /* AppContainer.swift */; };
+		D4088B983C49B391A0F0E820 /* SecurityConsoleViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD7014509B7AC7746E7D3D0 /* SecurityConsoleViewModelTests.swift */; };
+		EA63FDEA3F04403B3708613F /* SecuPersoUI in Frameworks */ = {isa = PBXBuildFile; productRef = 2B797E8CC4A4F8CE9CB21803 /* SecuPersoUI */; };
+		F07E3FB24137A9C54A11512B /* RiskScoringEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30AC5C385CB71BE51CBC94B /* RiskScoringEngineTests.swift */; };
+		FB61FAF57B05AA90144224FF /* EncryptionAndDatabaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 094D0677FB400B41159985FC /* EncryptionAndDatabaseTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		094D0677FB400B41159985FC /* EncryptionAndDatabaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncryptionAndDatabaseTests.swift; sourceTree = "<group>"; };
+		16B5446C6FB4318C033DDE4F /* providers.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = providers.json; sourceTree = "<group>"; };
+		27C68A75398E40D17096CB9A /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
+		3D60C7162F15B7E5672C674A /* MockProviderConnectionServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockProviderConnectionServiceTests.swift; sourceTree = "<group>"; };
+		4480C47E20D13F0EEFB69D64 /* SecuPerso.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SecuPerso.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5014F6DEB10C168CEF4A76AC /* exposures.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = exposures.json; sourceTree = "<group>"; };
+		5A288BD3EF31193CEFA51538 /* SecuPersoUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SecuPersoUI; path = Packages/SecuPersoUI; sourceTree = SOURCE_ROOT; };
+		5BF17C07E32DDB82F0B1AD0F /* SecuPersoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SecuPersoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C5021922DCEEEA73EE306D2 /* SecuPersoDomain */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SecuPersoDomain; path = Packages/SecuPersoDomain; sourceTree = SOURCE_ROOT; };
+		74FD684002EBB2604A328581 /* SecuPersoData */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SecuPersoData; path = Packages/SecuPersoData; sourceTree = SOURCE_ROOT; };
+		81F2C40E6DBF7D94BB64FD8B /* HaveIBeenPwnedExposureMonitoringServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HaveIBeenPwnedExposureMonitoringServiceTests.swift; sourceTree = "<group>"; };
+		83FF9330B747D05915546A61 /* LocalNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalNotificationManager.swift; sourceTree = "<group>"; };
+		919F8D27AA4524BB37E0C15E /* SecuPersoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecuPersoApp.swift; sourceTree = "<group>"; };
+		B30AC5C385CB71BE51CBC94B /* RiskScoringEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RiskScoringEngineTests.swift; sourceTree = "<group>"; };
+		C382CC4959732A92D2F3C27B /* FixtureDataLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixtureDataLoaderTests.swift; sourceTree = "<group>"; };
+		DA15ABFDEA4C0B17DAD3A508 /* SecuPersoFeatures */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SecuPersoFeatures; path = Packages/SecuPersoFeatures; sourceTree = SOURCE_ROOT; };
+		DDD7014509B7AC7746E7D3D0 /* SecurityConsoleViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityConsoleViewModelTests.swift; sourceTree = "<group>"; };
+		F25C5DFE5FF1F5464083A1AF /* login_events.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = login_events.json; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3B656A9806EE6564B8F8FE7C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				747C5A0293C6C2CA94618CEC /* SecuPersoDomain in Frameworks */,
+				16D05168B48FB247E2700F62 /* SecuPersoData in Frameworks */,
+				6261497CB9E0DF4744C879AE /* SecuPersoFeatures in Frameworks */,
+				EA63FDEA3F04403B3708613F /* SecuPersoUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4E8322C06BF6965EBD012950 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				802C9A1FDCF6D59791514124 /* SecuPersoDomain in Frameworks */,
+				9B9C878F727D807F1A065BBF /* SecuPersoData in Frameworks */,
+				932E59DB2BD87C7F71708C06 /* SecuPersoFeatures in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1433C8431DAA8A47C86BC2D8 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				74FD684002EBB2604A328581 /* SecuPersoData */,
+				6C5021922DCEEEA73EE306D2 /* SecuPersoDomain */,
+				DA15ABFDEA4C0B17DAD3A508 /* SecuPersoFeatures */,
+				5A288BD3EF31193CEFA51538 /* SecuPersoUI */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		19DC98C6EF36E708EC169574 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				5014F6DEB10C168CEF4A76AC /* exposures.json */,
+				F25C5DFE5FF1F5464083A1AF /* login_events.json */,
+				16B5446C6FB4318C033DDE4F /* providers.json */,
+			);
+			path = Fixtures;
+			sourceTree = "<group>";
+		};
+		7622AD4F754FC839EA84E1BF = {
+			isa = PBXGroup;
+			children = (
+				19DC98C6EF36E708EC169574 /* Fixtures */,
+				1433C8431DAA8A47C86BC2D8 /* Packages */,
+				EA961F05359914197ED8014C /* SecuPersoApp */,
+				C887F110DAC312875F1F80F7 /* SecuPersoTests */,
+				F1C06F1D0166413988E08BB3 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C887F110DAC312875F1F80F7 /* SecuPersoTests */ = {
+			isa = PBXGroup;
+			children = (
+				094D0677FB400B41159985FC /* EncryptionAndDatabaseTests.swift */,
+				C382CC4959732A92D2F3C27B /* FixtureDataLoaderTests.swift */,
+				81F2C40E6DBF7D94BB64FD8B /* HaveIBeenPwnedExposureMonitoringServiceTests.swift */,
+				3D60C7162F15B7E5672C674A /* MockProviderConnectionServiceTests.swift */,
+				B30AC5C385CB71BE51CBC94B /* RiskScoringEngineTests.swift */,
+				DDD7014509B7AC7746E7D3D0 /* SecurityConsoleViewModelTests.swift */,
+			);
+			name = SecuPersoTests;
+			path = Tests/SecuPersoTests;
+			sourceTree = "<group>";
+		};
+		EA961F05359914197ED8014C /* SecuPersoApp */ = {
+			isa = PBXGroup;
+			children = (
+				27C68A75398E40D17096CB9A /* AppContainer.swift */,
+				83FF9330B747D05915546A61 /* LocalNotificationManager.swift */,
+				919F8D27AA4524BB37E0C15E /* SecuPersoApp.swift */,
+			);
+			name = SecuPersoApp;
+			path = App/SecuPersoApp;
+			sourceTree = "<group>";
+		};
+		F1C06F1D0166413988E08BB3 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4480C47E20D13F0EEFB69D64 /* SecuPerso.app */,
+				5BF17C07E32DDB82F0B1AD0F /* SecuPersoTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6FFC69A2341940D1B17431C3 /* SecuPerso */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5FFD1C50ED8ED322A80FDA01 /* Build configuration list for PBXNativeTarget "SecuPerso" */;
+			buildPhases = (
+				0CFA9F1B8B64FA6A7671C535 /* Sources */,
+				EDAEED0615866A23B1A38CBE /* Resources */,
+				3B656A9806EE6564B8F8FE7C /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SecuPerso;
+			packageProductDependencies = (
+				59B25A32E2BE5A1FEA68949A /* SecuPersoDomain */,
+				09190AF84FB78D245F0341EA /* SecuPersoData */,
+				E7FC27C9AA8011686B0D9B17 /* SecuPersoFeatures */,
+				2B797E8CC4A4F8CE9CB21803 /* SecuPersoUI */,
+			);
+			productName = SecuPerso;
+			productReference = 4480C47E20D13F0EEFB69D64 /* SecuPerso.app */;
+			productType = "com.apple.product-type.application";
+		};
+		BE38C4249B66E6C11B5A0073 /* SecuPersoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 530094884D9410B35A336202 /* Build configuration list for PBXNativeTarget "SecuPersoTests" */;
+			buildPhases = (
+				E794A984E774AEE5F4BA48DF /* Sources */,
+				4E8322C06BF6965EBD012950 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SecuPersoTests;
+			packageProductDependencies = (
+				2BFE82322F887FD5757A0022 /* SecuPersoDomain */,
+				AA1F2A48D6C787D8EA1C248E /* SecuPersoData */,
+				A6AA6045C7C2C7C7568FB7E0 /* SecuPersoFeatures */,
+			);
+			productName = SecuPersoTests;
+			productReference = 5BF17C07E32DDB82F0B1AD0F /* SecuPersoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A3EA939E0FD81DDA417E304C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					6FFC69A2341940D1B17431C3 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 9BA69BB78CB7D78B96D54A52 /* Build configuration list for PBXProject "SecuPerso" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7622AD4F754FC839EA84E1BF;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				28736A2C30A812AB5C5021ED /* XCLocalSwiftPackageReference "Packages/SecuPersoData" */,
+				1930FE414B49A8CB20A62F8D /* XCLocalSwiftPackageReference "Packages/SecuPersoDomain" */,
+				18634B02249E96EE1D48A331 /* XCLocalSwiftPackageReference "Packages/SecuPersoFeatures" */,
+				95C72ED54B379D89D0CF2CBD /* XCLocalSwiftPackageReference "Packages/SecuPersoUI" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6FFC69A2341940D1B17431C3 /* SecuPerso */,
+				BE38C4249B66E6C11B5A0073 /* SecuPersoTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		EDAEED0615866A23B1A38CBE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BA9B882F943001C4928D866D /* exposures.json in Resources */,
+				6AA10D9679D39B47D6ED6EC9 /* login_events.json in Resources */,
+				18BE1C7463ABBFF70704C6F9 /* providers.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0CFA9F1B8B64FA6A7671C535 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C9ACE4D924E188FDFC94C928 /* AppContainer.swift in Sources */,
+				021AAB3D551435DE4F18A0BB /* LocalNotificationManager.swift in Sources */,
+				6CB0C2DFB738CDAB8C7FFD7D /* SecuPersoApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E794A984E774AEE5F4BA48DF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB61FAF57B05AA90144224FF /* EncryptionAndDatabaseTests.swift in Sources */,
+				171C338D9E6349C9C7FE5F06 /* FixtureDataLoaderTests.swift in Sources */,
+				796418BF1D6984EE7E5E6A6E /* HaveIBeenPwnedExposureMonitoringServiceTests.swift in Sources */,
+				5458B876877E3E482D8304F5 /* MockProviderConnectionServiceTests.swift in Sources */,
+				F07E3FB24137A9C54A11512B /* RiskScoringEngineTests.swift in Sources */,
+				D4088B983C49B391A0F0E820 /* SecurityConsoleViewModelTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		353541F47F9451CE2D2375F3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DATA_MODE = MOCK;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -DDATA_MODE_MOCK";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		6AD7C1C8AF5089C5BF4819D9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		B298E65C6298F5A72BAFC188 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APP_SANDBOX_INCOMING_CONNECTIONS = NO;
+				APP_SANDBOX_OUTGOING_CONNECTIONS = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secuperso.app;
+				PRODUCT_NAME = SecuPerso;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		B373F4D97E3AABC8D132B9AF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E25F7789F1B5A2FEBF432BCC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APP_SANDBOX_INCOMING_CONNECTIONS = NO;
+				APP_SANDBOX_OUTGOING_CONNECTIONS = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secuperso.app;
+				PRODUCT_NAME = SecuPerso;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		E4391FBB64E6AE00A2681006 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DATA_MODE = MOCK;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -DDATA_MODE_MOCK";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		530094884D9410B35A336202 /* Build configuration list for PBXNativeTarget "SecuPersoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B373F4D97E3AABC8D132B9AF /* Debug */,
+				6AD7C1C8AF5089C5BF4819D9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		5FFD1C50ED8ED322A80FDA01 /* Build configuration list for PBXNativeTarget "SecuPerso" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B298E65C6298F5A72BAFC188 /* Debug */,
+				E25F7789F1B5A2FEBF432BCC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9BA69BB78CB7D78B96D54A52 /* Build configuration list for PBXProject "SecuPerso" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E4391FBB64E6AE00A2681006 /* Debug */,
+				353541F47F9451CE2D2375F3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		18634B02249E96EE1D48A331 /* XCLocalSwiftPackageReference "Packages/SecuPersoFeatures" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SecuPersoFeatures;
+		};
+		1930FE414B49A8CB20A62F8D /* XCLocalSwiftPackageReference "Packages/SecuPersoDomain" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SecuPersoDomain;
+		};
+		28736A2C30A812AB5C5021ED /* XCLocalSwiftPackageReference "Packages/SecuPersoData" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SecuPersoData;
+		};
+		95C72ED54B379D89D0CF2CBD /* XCLocalSwiftPackageReference "Packages/SecuPersoUI" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SecuPersoUI;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		09190AF84FB78D245F0341EA /* SecuPersoData */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SecuPersoData;
+		};
+		2B797E8CC4A4F8CE9CB21803 /* SecuPersoUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SecuPersoUI;
+		};
+		2BFE82322F887FD5757A0022 /* SecuPersoDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SecuPersoDomain;
+		};
+		59B25A32E2BE5A1FEA68949A /* SecuPersoDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SecuPersoDomain;
+		};
+		A6AA6045C7C2C7C7568FB7E0 /* SecuPersoFeatures */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SecuPersoFeatures;
+		};
+		AA1F2A48D6C787D8EA1C248E /* SecuPersoData */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SecuPersoData;
+		};
+		E7FC27C9AA8011686B0D9B17 /* SecuPersoFeatures */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SecuPersoFeatures;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A3EA939E0FD81DDA417E304C /* Project object */;
+}

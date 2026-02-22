@@ -1,0 +1,3 @@
+module SecuPersoData {
+    header "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/include/SecuPersoData-Swift.h"
+}

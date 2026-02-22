@@ -1,0 +1,26 @@
+{
+  "": {
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/master.swiftdeps"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/DesignTokens.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/DesignTokens.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/DesignTokens.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/DesignTokens~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/DesignTokens.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/DesignTokens.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/MetricCardView.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/MetricCardView.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/MetricCardView.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/MetricCardView~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/MetricCardView.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/MetricCardView.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/RiskBadgeView.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/RiskBadgeView.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/RiskBadgeView~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/RiskBadgeView.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/RiskBadgeView.dia"
+  }
+}

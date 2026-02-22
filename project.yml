@@ -1,0 +1,87 @@
+name: SecuPerso
+options:
+  minimumXcodeGenVersion: 2.44.1
+  deploymentTarget:
+    macOS: "15.0"
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    DATA_MODE: MOCK
+    OTHER_SWIFT_FLAGS: "$(inherited) -DDATA_MODE_MOCK"
+packages:
+  SecuPersoDomain:
+    path: Packages/SecuPersoDomain
+  SecuPersoData:
+    path: Packages/SecuPersoData
+  SecuPersoFeatures:
+    path: Packages/SecuPersoFeatures
+  SecuPersoUI:
+    path: Packages/SecuPersoUI
+targets:
+  SecuPerso:
+    type: application
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: App/SecuPersoApp
+      - path: Fixtures
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.secuperso.app
+        PRODUCT_NAME: SecuPerso
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+        ENABLE_APP_SANDBOX: YES
+        APP_SANDBOX_INCOMING_CONNECTIONS: NO
+        APP_SANDBOX_OUTGOING_CONNECTIONS: YES
+    dependencies:
+      - package: SecuPersoDomain
+        product: SecuPersoDomain
+      - package: SecuPersoData
+        product: SecuPersoData
+      - package: SecuPersoFeatures
+        product: SecuPersoFeatures
+      - package: SecuPersoUI
+        product: SecuPersoUI
+  SecuPersoTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: Tests/SecuPersoTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGNING_ALLOWED: NO
+    dependencies:
+      - package: SecuPersoDomain
+        product: SecuPersoDomain
+      - package: SecuPersoData
+        product: SecuPersoData
+      - package: SecuPersoFeatures
+        product: SecuPersoFeatures
+schemes:
+  SecuPerso-Debug:
+    build:
+      targets:
+        SecuPerso: all
+        SecuPersoTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - SecuPersoTests
+  SecuPerso-Release:
+    build:
+      targets:
+        SecuPerso: all
+    run:
+      config: Release

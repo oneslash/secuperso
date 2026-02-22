@@ -1,0 +1,3 @@
+module SecuPersoUI {
+    header "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/include/SecuPersoUI-Swift.h"
+}

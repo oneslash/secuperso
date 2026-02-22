@@ -1,0 +1,41 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "secupersodomain",
+          "kind" : "fileSystem",
+          "location" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain",
+          "name" : "SecuPersoDomain"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain"
+        },
+        "subpath" : "secupersodomain"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "secupersoui",
+          "kind" : "fileSystem",
+          "location" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI",
+          "name" : "SecuPersoUI"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI"
+        },
+        "subpath" : "secupersoui"
+      }
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}

@@ -1,0 +1,68 @@
+{
+  "": {
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/master.swiftdeps"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/EncryptedSQLiteDatabase.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptedSQLiteDatabase.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptedSQLiteDatabase.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptedSQLiteDatabase~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptedSQLiteDatabase.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptedSQLiteDatabase.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/EncryptionKeyProvider.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptionKeyProvider.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptionKeyProvider.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptionKeyProvider~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptionKeyProvider.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptionKeyProvider.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/FixtureDataLoader.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/FixtureDataLoader.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/FixtureDataLoader.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/FixtureDataLoader~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/FixtureDataLoader.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/FixtureDataLoader.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/HaveIBeenPwnedExposureMonitoringService.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/HaveIBeenPwnedExposureMonitoringService.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/HaveIBeenPwnedExposureMonitoringService.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/HaveIBeenPwnedExposureMonitoringService~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/HaveIBeenPwnedExposureMonitoringService.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/HaveIBeenPwnedExposureMonitoringService.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/KeychainSecureStore.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/KeychainSecureStore.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/KeychainSecureStore.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/KeychainSecureStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/KeychainSecureStore.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/KeychainSecureStore.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MockDataCoordinator.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/MockDataCoordinator.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/MockDataCoordinator.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/MockDataCoordinator~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/MockDataCoordinator.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/MockDataCoordinator.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MockServices.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/MockServices.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/MockServices.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/MockServices~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/MockServices.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/MockServices.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/SecuPersoDataError.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/SecuPersoDataError.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/SecuPersoDataError.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/SecuPersoDataError~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/SecuPersoDataError.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/SecuPersoDataError.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/StreamStore.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/StreamStore.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/StreamStore.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/StreamStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/StreamStore.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/StreamStore.dia"
+  }
+}

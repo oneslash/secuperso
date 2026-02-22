@@ -1,0 +1,85 @@
+{
+  "clean": [
+    {
+      "id": "C01A25F9-1F37-4E02-B96D-FBDEAC04C101",
+      "provider": "google",
+      "occurredAt": "2026-02-22T10:05:00Z",
+      "device": "MacBook Pro",
+      "ipAddress": "203.0.113.10",
+      "location": "San Francisco, US",
+      "reason": "Known device and expected location",
+      "suspicious": false,
+      "expected": true
+    }
+  ],
+  "moderate": [
+    {
+      "id": "C01A25F9-1F37-4E02-B96D-FBDEAC04C111",
+      "provider": "google",
+      "occurredAt": "2026-02-22T09:50:00Z",
+      "device": "MacBook Pro",
+      "ipAddress": "203.0.113.10",
+      "location": "San Francisco, US",
+      "reason": "Known device and expected location",
+      "suspicious": false,
+      "expected": true
+    },
+    {
+      "id": "C01A25F9-1F37-4E02-B96D-FBDEAC04C112",
+      "provider": "outlook",
+      "occurredAt": "2026-02-22T08:55:00Z",
+      "device": "Windows Edge",
+      "ipAddress": "198.51.100.30",
+      "location": "Unknown region",
+      "reason": "Unusual location and new device",
+      "suspicious": true,
+      "expected": false
+    },
+    {
+      "id": "C01A25F9-1F37-4E02-B96D-FBDEAC04C113",
+      "provider": "google",
+      "occurredAt": "2026-02-21T21:10:00Z",
+      "device": "iPhone",
+      "ipAddress": "203.0.113.12",
+      "location": "San Jose, US",
+      "reason": "Trusted mobile sign-in",
+      "suspicious": false,
+      "expected": true
+    }
+  ],
+  "critical": [
+    {
+      "id": "C01A25F9-1F37-4E02-B96D-FBDEAC04C121",
+      "provider": "google",
+      "occurredAt": "2026-02-22T09:59:00Z",
+      "device": "Unknown Linux",
+      "ipAddress": "198.51.100.90",
+      "location": "Moscow, RU",
+      "reason": "Impossible travel and unknown browser fingerprint",
+      "suspicious": true,
+      "expected": false
+    },
+    {
+      "id": "C01A25F9-1F37-4E02-B96D-FBDEAC04C122",
+      "provider": "outlook",
+      "occurredAt": "2026-02-22T09:45:00Z",
+      "device": "Unknown Android",
+      "ipAddress": "198.51.100.91",
+      "location": "Warsaw, PL",
+      "reason": "New device followed by risky IP",
+      "suspicious": true,
+      "expected": false
+    },
+    {
+      "id": "C01A25F9-1F37-4E02-B96D-FBDEAC04C123",
+      "provider": "google",
+      "occurredAt": "2026-02-22T09:33:00Z",
+      "device": "Unknown Linux",
+      "ipAddress": "198.51.100.90",
+      "location": "Moscow, RU",
+      "reason": "Repeated suspicious sign-in from same risky origin",
+      "suspicious": true,
+      "expected": false
+    }
+  ]
+}

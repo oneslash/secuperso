@@ -1,0 +1,71 @@
+{
+  "clean": [
+    {
+      "id": "A9E97D4D-9B5A-4596-A2DF-E80FDBAEEA01",
+      "email": "owner@example.com",
+      "source": "No active breaches",
+      "foundAt": "2026-02-20T10:00:00Z",
+      "severity": "low",
+      "status": "resolved",
+      "remediation": "No action required. Continue monitoring and keep MFA enabled."
+    }
+  ],
+  "moderate": [
+    {
+      "id": "A9E97D4D-9B5A-4596-A2DF-E80FDBAEEA11",
+      "email": "owner@example.com",
+      "source": "Forum leak (mock)",
+      "foundAt": "2026-02-20T10:15:00Z",
+      "severity": "medium",
+      "status": "open",
+      "remediation": "Rotate password for affected account and review reused credentials."
+    },
+    {
+      "id": "A9E97D4D-9B5A-4596-A2DF-E80FDBAEEA12",
+      "email": "owner@example.com",
+      "source": "Legacy paste dump (mock)",
+      "foundAt": "2026-02-19T08:30:00Z",
+      "severity": "high",
+      "status": "open",
+      "remediation": "Enable passkeys for main providers and invalidate active sessions."
+    },
+    {
+      "id": "A9E97D4D-9B5A-4596-A2DF-E80FDBAEEA13",
+      "email": "old.alias@example.com",
+      "source": "Archived breach corpus",
+      "foundAt": "2026-02-10T08:30:00Z",
+      "severity": "low",
+      "status": "resolved",
+      "remediation": "Archived alias confirmed inactive. Keep monitoring for reuse."
+    }
+  ],
+  "critical": [
+    {
+      "id": "A9E97D4D-9B5A-4596-A2DF-E80FDBAEEA21",
+      "email": "owner@example.com",
+      "source": "Credential stuffing list (mock)",
+      "foundAt": "2026-02-21T01:15:00Z",
+      "severity": "critical",
+      "status": "open",
+      "remediation": "Immediately rotate password, enforce passkey, and revoke all active sessions."
+    },
+    {
+      "id": "A9E97D4D-9B5A-4596-A2DF-E80FDBAEEA22",
+      "email": "owner@example.com",
+      "source": "Marketplace combo pack (mock)",
+      "foundAt": "2026-02-21T01:00:00Z",
+      "severity": "high",
+      "status": "open",
+      "remediation": "Review account recovery channels and remove unknown devices."
+    },
+    {
+      "id": "A9E97D4D-9B5A-4596-A2DF-E80FDBAEEA23",
+      "email": "backup@example.com",
+      "source": "Historical leak bundle (mock)",
+      "foundAt": "2026-02-20T22:30:00Z",
+      "severity": "critical",
+      "status": "open",
+      "remediation": "Reset credentials for backup accounts and validate forwarding rules."
+    }
+  ]
+}

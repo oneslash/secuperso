@@ -1,0 +1,47 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "PackageStructure": ["<PackageStructure>"]
+  "SecuPersoDomain-arm64-apple-macosx26.0-debug.module": ["<SecuPersoDomain-arm64-apple-macosx26.0-debug.module>"]
+  "main": ["<SecuPersoDomain-arm64-apple-macosx26.0-debug.module>"]
+  "test": ["<SecuPersoDomain-arm64-apple-macosx26.0-debug.module>"]
+default: "main"
+nodes:
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/Sources/SecuPersoDomain/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/SecuPersoDomain.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/Sources/SecuPersoDomain/Models.swift","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/Sources/SecuPersoDomain/Protocols.swift","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/Sources/SecuPersoDomain/RiskScoringEngine.swift"]
+    outputs: ["/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/SecuPersoDomain.build/sources"]
+    description: "Write auxiliary file /Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/SecuPersoDomain.build/sources"
+
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Library/Developer/CommandLineTools/usr/bin/swiftc"]
+    outputs: ["/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+
+  "<SecuPersoDomain-arm64-apple-macosx26.0-debug.module>":
+    tool: phony
+    inputs: ["/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/Modules/SecuPersoDomain.swiftmodule"]
+    outputs: ["<SecuPersoDomain-arm64-apple-macosx26.0-debug.module>"]
+
+  "C.SecuPersoDomain-arm64-apple-macosx26.0-debug.module":
+    tool: shell
+    inputs: ["/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/Sources/SecuPersoDomain/Models.swift","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/Sources/SecuPersoDomain/Protocols.swift","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/Sources/SecuPersoDomain/RiskScoringEngine.swift","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/SecuPersoDomain.build/sources"]
+    outputs: ["/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/Modules/SecuPersoDomain.swiftmodule"]
+    description: "Compiling Swift Module 'SecuPersoDomain' (3 sources)"
+    args: ["/Library/Developer/CommandLineTools/usr/bin/swiftc","-module-name","SecuPersoDomain","-emit-dependencies","-emit-module","-emit-module-path","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/Modules/SecuPersoDomain.swiftmodule","-output-file-map","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/SecuPersoDomain.build/output-file-map.json","-parse-as-library","-incremental","@/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/SecuPersoDomain.build/sources","-I","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx15.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-index-store-path","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-j12","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-emit-objc-header","-emit-objc-header-path","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/.build/index-build/arm64-apple-macosx/debug/SecuPersoDomain.build/include/SecuPersoDomain-Swift.h","-swift-version","6","-Xfrontend","-experimental-lazy-typecheck","-Xfrontend","-experimental-skip-all-function-bodies","-Xfrontend","-experimental-allow-module-with-compiler-errors","-Xfrontend","-empty-abi-descriptor","-I","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-L","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-plugin-path","/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing","-sdk","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-g","-Xcc","-isysroot","-Xcc","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-Xcc","-fPIC","-Xcc","-g","-package-name","secupersodomain"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/Sources/SecuPersoDomain/","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/Package.swift","/Users/sardo/Projects/secuperso/Packages/SecuPersoDomain/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+

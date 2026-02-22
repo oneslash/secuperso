@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/index-build/arm64-apple-macosx/debug/SecuPersoFeatures.build/master.swiftdeps"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/SecurityConsole.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/index-build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsole.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/index-build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsole.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/index-build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsole~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/index-build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsole.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/index-build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsole.dia"
+  }
+}

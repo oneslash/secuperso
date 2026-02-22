@@ -1,0 +1,61 @@
+{
+  "": {
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/master.swiftdeps"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/EmailExposureScreen.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/EmailExposureScreen.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/EmailExposureScreen.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/EmailExposureScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/EmailExposureScreen.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/EmailExposureScreen.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/LoginActivityScreen.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/LoginActivityScreen.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/LoginActivityScreen.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/LoginActivityScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/LoginActivityScreen.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/LoginActivityScreen.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/MockOAuthSheet.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/MockOAuthSheet.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/MockOAuthSheet.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/MockOAuthSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/MockOAuthSheet.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/MockOAuthSheet.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/OverviewScreen.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/OverviewScreen.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/OverviewScreen.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/OverviewScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/OverviewScreen.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/OverviewScreen.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/SecurityConsoleModels.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleModels.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleModels.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleModels.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleModels.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/SecurityConsoleView.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleView.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleView.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleView~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleView.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleView.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/SecurityConsoleViewModel.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleViewModel.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleViewModel.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleViewModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleViewModel.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SecurityConsoleViewModel.dia"
+  },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/SettingsScreen.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SettingsScreen.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SettingsScreen.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SettingsScreen~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SettingsScreen.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/SettingsScreen.dia"
+  }
+}

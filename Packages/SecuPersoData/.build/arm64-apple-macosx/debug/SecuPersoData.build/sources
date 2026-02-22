@@ -1,0 +1,10 @@
+/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/EncryptedSQLiteDatabase.swift
+/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/EncryptionKeyProvider.swift
+/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/ExposureSourceConfigurationStore.swift
+/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/FixtureDataLoader.swift
+/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/HaveIBeenPwnedExposureMonitoringService.swift
+/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/KeychainSecureStore.swift
+/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MockDataCoordinator.swift
+/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MockServices.swift
+/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/SecuPersoDataError.swift
+/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/StreamStore.swift

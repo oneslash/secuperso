@@ -1,0 +1,17 @@
+[
+  {
+    "id": "google",
+    "displayName": "Google",
+    "details": "Mock Google account security activity"
+  },
+  {
+    "id": "outlook",
+    "displayName": "Outlook",
+    "details": "Mock Microsoft Outlook sign-in monitoring"
+  },
+  {
+    "id": "other",
+    "displayName": "Other Service",
+    "details": "Generic provider used to test mock OAuth failures"
+  }
+]

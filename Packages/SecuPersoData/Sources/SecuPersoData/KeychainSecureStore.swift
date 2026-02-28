@@ -59,4 +59,16 @@ public final class KeychainSecureStore: SecureStore, @unchecked Sendable {
             throw SecuPersoDataError.keychainFailure(status)
         }
     }
+
+    public func delete(_ key: String) throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key
+        ]
+        let status = SecItemDelete(query as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw SecuPersoDataError.keychainFailure(status)
+        }
+    }
 }

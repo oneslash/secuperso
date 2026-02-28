@@ -6,26 +6,28 @@ import SecuPersoDomain
 final class MockProviderConnectionServiceTests: XCTestCase {
     func testGoogleMockOAuthEndsConnected() async throws {
         let service = try await makeService()
-        let stream = await service.beginMockOAuth(for: .google)
+        let stream = await service.beginConnection(for: .google)
 
-        var states: [ConnectionState] = []
-        for await state in stream {
-            states.append(state)
+        var updates: [ProviderConnectionUpdate] = []
+        for await update in stream {
+            updates.append(update)
         }
 
-        XCTAssertEqual(states.last, .connected)
+        XCTAssertEqual(updates.last?.state, .connected)
+        XCTAssertEqual(updates.last?.message, "Provider connected successfully.")
     }
 
     func testOtherProviderMockOAuthEndsError() async throws {
         let service = try await makeService()
-        let stream = await service.beginMockOAuth(for: .other)
+        let stream = await service.beginConnection(for: .other)
 
-        var states: [ConnectionState] = []
-        for await state in stream {
-            states.append(state)
+        var updates: [ProviderConnectionUpdate] = []
+        for await update in stream {
+            updates.append(update)
         }
 
-        XCTAssertEqual(states.last, .error)
+        XCTAssertEqual(updates.last?.state, .error)
+        XCTAssertEqual(updates.last?.message, "Provider connection failed in mock flow.")
     }
 
     private func makeService() async throws -> MockProviderConnectionService {

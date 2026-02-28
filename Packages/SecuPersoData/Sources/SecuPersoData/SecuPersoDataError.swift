@@ -10,10 +10,14 @@ public enum SecuPersoDataError: Error, LocalizedError {
     case missingEncryptionKey
     case loginEventNotFound(UUID)
     case incidentNotFound(UUID)
+    case monitoredEmailNotFound(UUID)
+    case duplicateMonitoredEmail
     case invalidRemoteConfiguration(String)
     case remoteResponseInvalid
     case remoteDecodeFailure
     case remoteRequestRejected(statusCode: Int, message: String)
+    case exposureBatchAborted(reason: String)
+    case migrationFailure(String)
 
     public var errorDescription: String? {
         switch self {
@@ -35,6 +39,10 @@ public enum SecuPersoDataError: Error, LocalizedError {
             return "Login event not found: \(id.uuidString)."
         case .incidentNotFound(let id):
             return "Incident not found: \(id.uuidString)."
+        case .monitoredEmailNotFound(let id):
+            return "Monitored email was not found: \(id.uuidString)."
+        case .duplicateMonitoredEmail:
+            return "This email is already being monitored."
         case .invalidRemoteConfiguration(let message):
             return "Invalid remote data-source configuration: \(message)"
         case .remoteResponseInvalid:
@@ -43,6 +51,10 @@ public enum SecuPersoDataError: Error, LocalizedError {
             return "Failed to decode remote exposure payload."
         case .remoteRequestRejected(_, let message):
             return message
+        case .exposureBatchAborted(let reason):
+            return reason
+        case .migrationFailure(let message):
+            return "Data migration failed: \(message)"
         }
     }
 }

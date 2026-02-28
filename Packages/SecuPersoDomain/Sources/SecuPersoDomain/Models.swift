@@ -72,9 +72,36 @@ public struct ExposureRecord: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
+public struct MonitoredEmailAddress: Identifiable, Codable, Hashable, Sendable {
+    public var id: UUID
+    public var email: String
+    public var providerHint: ProviderID
+    public var isEnabled: Bool
+    public var createdAt: Date
+    public var lastCheckedAt: Date?
+
+    public init(
+        id: UUID,
+        email: String,
+        providerHint: ProviderID,
+        isEnabled: Bool,
+        createdAt: Date,
+        lastCheckedAt: Date?
+    ) {
+        self.id = id
+        self.email = email
+        self.providerHint = providerHint
+        self.isEnabled = isEnabled
+        self.createdAt = createdAt
+        self.lastCheckedAt = lastCheckedAt
+    }
+}
+
 public struct LoginEvent: Identifiable, Codable, Hashable, Sendable {
     public var id: UUID
     public var provider: ProviderID
+    public var providerAccountID: String?
+    public var providerAccountEmail: String?
     public var occurredAt: Date
     public var device: String
     public var ipAddress: String
@@ -86,6 +113,8 @@ public struct LoginEvent: Identifiable, Codable, Hashable, Sendable {
     public init(
         id: UUID,
         provider: ProviderID,
+        providerAccountID: String? = nil,
+        providerAccountEmail: String? = nil,
         occurredAt: Date,
         device: String,
         ipAddress: String,
@@ -96,6 +125,8 @@ public struct LoginEvent: Identifiable, Codable, Hashable, Sendable {
     ) {
         self.id = id
         self.provider = provider
+        self.providerAccountID = providerAccountID
+        self.providerAccountEmail = providerAccountEmail
         self.occurredAt = occurredAt
         self.device = device
         self.ipAddress = ipAddress
@@ -166,6 +197,16 @@ public struct ProviderConnection: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
+public struct ProviderConnectionUpdate: Equatable, Sendable {
+    public var state: ConnectionState
+    public var message: String
+
+    public init(state: ConnectionState, message: String) {
+        self.state = state
+        self.message = message
+    }
+}
+
 public struct ProviderDescriptor: Identifiable, Codable, Hashable, Sendable {
     public var id: ProviderID
     public var displayName: String
@@ -180,22 +221,18 @@ public struct ProviderDescriptor: Identifiable, Codable, Hashable, Sendable {
 
 public struct ExposureSourceConfiguration: Codable, Hashable, Sendable {
     public var apiKey: String
-    public var email: String
     public var userAgent: String
 
     public init(
         apiKey: String = "",
-        email: String = "",
         userAgent: String = "SecuPersoApp/1.0"
     ) {
         self.apiKey = apiKey
-        self.email = email
         self.userAgent = userAgent
     }
 
     public var isComplete: Bool {
         !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !userAgent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }

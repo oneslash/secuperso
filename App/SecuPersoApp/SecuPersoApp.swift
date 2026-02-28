@@ -4,15 +4,18 @@ import SecuPersoFeatures
 @MainActor
 final class AppBootstrapState: ObservableObject {
     @Published var viewModel: SecurityConsoleViewModel?
+    @Published var exposureViewModel: ExposureViewModel?
     @Published var errorMessage: String?
 
     init() {
         do {
             let container = try AppContainer()
             self.viewModel = container.viewModel
+            self.exposureViewModel = container.exposureViewModel
         } catch {
             self.errorMessage = error.localizedDescription
             self.viewModel = nil
+            self.exposureViewModel = nil
         }
     }
 }
@@ -23,8 +26,8 @@ struct SecuPersoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if let viewModel = bootstrap.viewModel {
-                SecurityConsoleView(viewModel: viewModel)
+            if let viewModel = bootstrap.viewModel, let exposureViewModel = bootstrap.exposureViewModel {
+                SecurityConsoleView(viewModel: viewModel, exposureViewModel: exposureViewModel)
             } else {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("SecuPerso failed to bootstrap")

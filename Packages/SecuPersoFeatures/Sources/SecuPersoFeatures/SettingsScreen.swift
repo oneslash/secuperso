@@ -4,81 +4,109 @@ import SecuPersoUI
 
 struct SettingsScreen: View {
     @ObservedObject var viewModel: SecurityConsoleViewModel
+    @ObservedObject var exposureViewModel: ExposureViewModel
+    @State private var advancedExpanded = false
 
     var body: some View {
-        Form {
-            Section("Exposure Data Source (HIBP v3)") {
-                SecureField("API Key", text: $viewModel.exposureSourceAPIKey)
-                TextField("Email", text: $viewModel.exposureSourceEmail)
-                TextField("User-Agent", text: $viewModel.exposureSourceUserAgent)
+        ScrollView {
+            VStack(alignment: .leading, spacing: DesignTokens.spacingL) {
+                SectionContainer(title: "General") {
+                    Text("SecuPerso stores your monitoring data locally and keeps setup intentionally simple.")
+                        .font(.subheadline)
+                        .foregroundStyle(DesignTokens.mutedForeground)
+                }
+
+                SectionContainer {
+                    DisclosureGroup("Advanced", isExpanded: $advancedExpanded) {
+                        advancedContent
+                            .padding(.top, DesignTokens.spacingS)
+                    }
+                    .font(.headline)
+                }
+            }
+            .padding(DesignTokens.spacingL)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .background(DesignTokens.appBackground)
+    }
+
+    @ViewBuilder
+    private var advancedContent: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
+            VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
+                Text("Exposure Data Source (HIBP v3)")
+                    .font(.headline)
+
+                Text("API Key")
+                    .font(.caption)
+                    .foregroundStyle(DesignTokens.mutedForeground)
+                SecureField("API Key", text: $exposureViewModel.exposureSourceAPIKey)
+                    .textFieldStyle(.roundedBorder)
+
+                Text("User-Agent")
+                    .font(.caption)
+                    .foregroundStyle(DesignTokens.mutedForeground)
+                TextField("User-Agent", text: $exposureViewModel.exposureSourceUserAgent)
+                    .textFieldStyle(.roundedBorder)
 
                 HStack {
-                    Text(viewModel.exposureSourceConfigured ? "Configured" : "Missing API key or email")
+                    Text(exposureViewModel.exposureSourceConfigured ? "Configured" : "Missing API key")
                         .font(.caption)
-                        .foregroundStyle(viewModel.exposureSourceConfigured ? .green : .secondary)
+                        .foregroundStyle(exposureViewModel.exposureSourceConfigured ? .green : DesignTokens.mutedForeground)
                     Spacer()
                     Button("Save") {
-                        viewModel.saveExposureSourceConfiguration()
+                        exposureViewModel.saveExposureSourceConfiguration()
                     }
                 }
 
-                Text("Uses Have I Been Pwned API v3 to fetch breaches for the configured email.")
+                if let inlineStatusMessage = exposureViewModel.inlineStatusMessage {
+                    Text(inlineStatusMessage)
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+
+                Text("Uses Have I Been Pwned API v3 for breach checks.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DesignTokens.mutedForeground)
             }
 
-            Section("Mock Login Scenario") {
-                Picker("Scenario", selection: Binding(
-                    get: { viewModel.scenario },
-                    set: { newScenario in
-                        guard viewModel.scenario != newScenario else {
-                            return
+            Divider()
+
+            VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
+                Text("Mock Login Scenario")
+                    .font(.headline)
+
+                Picker(
+                    "Scenario",
+                    selection: Binding(
+                        get: { viewModel.scenario },
+                        set: { newScenario in
+                            guard viewModel.scenario != newScenario else { return }
+                            viewModel.setScenario(newScenario)
                         }
-                        viewModel.setScenario(newScenario)
-                    }
-                )) {
+                    )
+                ) {
                     ForEach(FixtureScenario.allCases, id: \.self) { scenario in
                         Text(scenario.title).tag(scenario)
                     }
                 }
-                Text("Switches deterministic fixture set used for login activity and incidents.")
+                .labelsHidden()
+                .frame(maxWidth: 220, alignment: .leading)
+
+                Text("Switches deterministic fixture sets used for demo sign-in and incident data.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DesignTokens.mutedForeground)
             }
 
-            Section("Connected Providers") {
-                ForEach(viewModel.providers) { provider in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(provider.displayName)
-                            Text(provider.details)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Text((viewModel.providerStates[provider.id] ?? .disconnected).rawValue.capitalized)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            Divider()
 
-                        if (viewModel.providerStates[provider.id] ?? .disconnected) == .connected {
-                            Button("Disconnect") {
-                                viewModel.disconnect(provider: provider.id)
-                            }
-                        } else {
-                            Button("Connect") {
-                                viewModel.beginConnectFlow(for: provider.id)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Section("Data Security") {
-                Text("Local data is encrypted and stored in SQLite. Encryption key is persisted in Keychain entry com.secuperso.app.db-key.")
+            VStack(alignment: .leading, spacing: DesignTokens.spacingXS) {
+                Text("Data Security")
+                    .font(.headline)
+                Text("Local data is encrypted in SQLite. The encryption key is stored in Keychain entry com.secuperso.app.db-key.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DesignTokens.mutedForeground)
             }
         }
-        .padding(DesignTokens.spacingL)
     }
 }

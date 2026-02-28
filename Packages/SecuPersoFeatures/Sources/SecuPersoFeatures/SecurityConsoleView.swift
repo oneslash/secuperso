@@ -2,22 +2,36 @@ import SwiftUI
 
 public struct SecurityConsoleView: View {
     @ObservedObject private var viewModel: SecurityConsoleViewModel
+    @ObservedObject private var exposureViewModel: ExposureViewModel
     @State private var selectedSection: AppSection = .overview
 
-    public init(viewModel: SecurityConsoleViewModel) {
+    public init(viewModel: SecurityConsoleViewModel, exposureViewModel: ExposureViewModel) {
         self.viewModel = viewModel
+        self.exposureViewModel = exposureViewModel
     }
 
     public var body: some View {
         NavigationSplitView {
-            List(AppSection.allCases, selection: $selectedSection) { section in
-                Label(section.title, systemImage: section.symbol)
-                    .tag(section)
+            List(selection: $selectedSection) {
+                Section("Main") {
+                    ForEach(AppSection.primaryCases) { section in
+                        Label(section.title, systemImage: section.symbol)
+                            .tag(section)
+                    }
+                }
+
+                Section("Utility") {
+                    ForEach(AppSection.utilityCases) { section in
+                        Label(section.title, systemImage: section.symbol)
+                            .tag(section)
+                    }
+                }
             }
             .listStyle(.sidebar)
             .navigationTitle("SecuPerso")
         } detail: {
             contentView
+                .animation(.easeInOut(duration: 0.2), value: selectedSection)
                 .navigationTitle(selectedSection.title)
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
@@ -33,6 +47,32 @@ public struct SecurityConsoleView: View {
                             Text("Last check: \(lastRefreshAt, style: .time)")
                                 .foregroundStyle(.secondary)
                         }
+                    }
+                }
+                .confirmationDialog(
+                    viewModel.pendingConfirmationAction?.title ?? "Confirm action",
+                    isPresented: Binding(
+                        get: { viewModel.pendingConfirmationAction != nil },
+                        set: { isPresented in
+                            if !isPresented {
+                                viewModel.cancelPendingAction()
+                            }
+                        }
+                    ),
+                    titleVisibility: .visible
+                ) {
+                    if let action = viewModel.pendingConfirmationAction {
+                        Button(action.confirmTitle, role: action.isDestructive ? .destructive : nil) {
+                            viewModel.confirmPendingAction()
+                        }
+                    }
+
+                    Button("Cancel", role: .cancel) {
+                        viewModel.cancelPendingAction()
+                    }
+                } message: {
+                    if let action = viewModel.pendingConfirmationAction {
+                        Text(action.message)
                     }
                 }
         }
@@ -63,6 +103,7 @@ public struct SecurityConsoleView: View {
         }
         .onAppear {
             viewModel.start()
+            exposureViewModel.start()
         }
     }
 
@@ -70,13 +111,15 @@ public struct SecurityConsoleView: View {
     private var contentView: some View {
         switch selectedSection {
         case .overview:
-            OverviewScreen(viewModel: viewModel)
-        case .emailExposure:
-            EmailExposureScreen(viewModel: viewModel)
-        case .loginActivity:
-            LoginActivityScreen(viewModel: viewModel)
+            OverviewScreen(viewModel: viewModel) { destination in
+                selectedSection = destination
+            }
+        case .exposure:
+            ExposureScreen(viewModel: viewModel, exposureViewModel: exposureViewModel)
+        case .activity:
+            ActivityScreen(viewModel: viewModel)
         case .settings:
-            SettingsScreen(viewModel: viewModel)
+            SettingsScreen(viewModel: viewModel, exposureViewModel: exposureViewModel)
         }
     }
 }

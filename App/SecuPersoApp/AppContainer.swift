@@ -7,6 +7,7 @@ import SecuPersoFeatures
 @MainActor
 final class AppContainer {
     let viewModel: SecurityConsoleViewModel
+    let exposureViewModel: ExposureViewModel
 
     init(bundle: Bundle = .main) throws {
         let exposureURL = try Self.fixtureURL(named: "exposures", bundle: bundle)
@@ -40,13 +41,26 @@ final class AppContainer {
         )
         let loginService = MockLoginActivityService(coordinator: coordinator)
         let incidentService = MockIncidentService(coordinator: coordinator)
-        let providerConnectionService = MockProviderConnectionService(coordinator: coordinator)
+        let fallbackProviderConnectionService = MockProviderConnectionService(coordinator: coordinator)
+        let microsoftOAuthConfiguration = Self.microsoftOAuthConfiguration(bundle: bundle)
+        let microsoftTokenStore = MicrosoftOAuthTokenStore(secureStore: secureStore)
+        let microsoftOutlookService = MicrosoftOutlookOAuthService(
+            coordinator: coordinator,
+            configuration: microsoftOAuthConfiguration,
+            authorizationSession: WebAuthenticationSessionAdapter(),
+            tokenExchanger: URLSessionMicrosoftOAuthTokenExchanger(),
+            tokenStore: microsoftTokenStore
+        )
+        let providerConnectionService = HybridProviderConnectionService(
+            fallbackService: fallbackProviderConnectionService,
+            outlookService: microsoftOutlookService
+        )
         let providerCatalogService = MockProviderCatalogService(coordinator: coordinator)
         let scenarioControlService = MockScenarioControlService(coordinator: coordinator)
         let loginActionService = MockLoginEventActionService(coordinator: coordinator)
 
         let notificationManager = LocalNotificationManager()
-        self.viewModel = SecurityConsoleViewModel(
+        let securityViewModel = SecurityConsoleViewModel(
             exposureService: exposureService,
             loginActivityService: loginService,
             incidentService: incidentService,
@@ -56,10 +70,17 @@ final class AppContainer {
             providerCatalogService: providerCatalogService,
             scenarioControlService: scenarioControlService,
             loginEventActionService: loginActionService,
-            exposureConfigurationService: exposureService,
             initialScenario: .moderate,
             highRiskNotifier: { snapshot in
                 await notificationManager.notifyHighRisk(snapshot: snapshot)
+            }
+        )
+        self.viewModel = securityViewModel
+        self.exposureViewModel = ExposureViewModel(
+            monitoredEmailService: exposureService,
+            exposureConfigurationService: exposureService,
+            refreshAction: {
+                await securityViewModel.refreshAll()
             }
         )
     }
@@ -98,5 +119,46 @@ final class AppContainer {
         let directory = appSupport.appendingPathComponent("SecuPerso", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         return directory.appendingPathComponent("secuperso.sqlite", isDirectory: false)
+    }
+
+    private static func microsoftOAuthConfiguration(bundle: Bundle) -> MicrosoftOAuthConfiguration? {
+        guard let rawClientID = bundle.object(forInfoDictionaryKey: "MS_ENTRA_CLIENT_ID") as? String else {
+            return nil
+        }
+        let clientID = rawClientID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clientID.isEmpty else {
+            return nil
+        }
+
+        let tenantID = (
+            bundle.object(forInfoDictionaryKey: "MS_ENTRA_TENANT_ID") as? String
+        )?.trimmingCharacters(in: .whitespacesAndNewlines)
+            ?? "common"
+
+        let redirectURIString = (
+            bundle.object(forInfoDictionaryKey: "MS_ENTRA_REDIRECT_URI") as? String
+        )?.trimmingCharacters(in: .whitespacesAndNewlines)
+            ?? "secuperso://oauth"
+        guard let redirectURI = URL(string: redirectURIString) else {
+            return nil
+        }
+
+        let scopesString = (
+            bundle.object(forInfoDictionaryKey: "MS_ENTRA_SCOPES") as? String
+        )?.trimmingCharacters(in: .whitespacesAndNewlines)
+            ?? "openid profile offline_access User.Read"
+        let scopes = scopesString
+            .split(whereSeparator: \.isWhitespace)
+            .map(String.init)
+        let resolvedScopes = scopes.isEmpty
+            ? ["openid", "profile", "offline_access", "User.Read"]
+            : scopes
+
+        return MicrosoftOAuthConfiguration(
+            clientID: clientID,
+            tenantID: tenantID.isEmpty ? "common" : tenantID,
+            redirectURI: redirectURI,
+            scopes: resolvedScopes
+        )
     }
 }

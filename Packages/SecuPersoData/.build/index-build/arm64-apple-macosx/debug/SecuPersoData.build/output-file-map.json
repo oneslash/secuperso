@@ -16,6 +16,13 @@
     "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptionKeyProvider.swiftdeps",
     "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/EncryptionKeyProvider.dia"
   },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/ExposureSourceConfigurationStore.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/ExposureSourceConfigurationStore.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/ExposureSourceConfigurationStore.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/ExposureSourceConfigurationStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/ExposureSourceConfigurationStore.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/ExposureSourceConfigurationStore.dia"
+  },
   "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/FixtureDataLoader.swift": {
     "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/FixtureDataLoader.d",
     "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/index-build/arm64-apple-macosx/debug/SecuPersoData.build/FixtureDataLoader.swift.o",

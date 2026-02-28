@@ -66,18 +66,21 @@ public final class MockProviderConnectionService: ProviderConnectionService, Pro
         self.coordinator = coordinator
     }
 
-    public func beginMockOAuth(for provider: ProviderID) async -> AsyncStream<ConnectionState> {
+    public func beginConnection(for provider: ProviderID) async -> AsyncStream<ProviderConnectionUpdate> {
         AsyncStream { continuation in
             Task {
-                continuation.yield(.connecting)
+                continuation.yield(ProviderConnectionUpdate(state: .connecting, message: "Opening consent screen..."))
                 try? await Task.sleep(for: .seconds(1))
 
-                continuation.yield(.connecting)
+                continuation.yield(ProviderConnectionUpdate(state: .connecting, message: "Granting permissions..."))
                 try? await Task.sleep(for: .seconds(1))
 
                 let finalState: ConnectionState = provider == .other ? .error : .connected
                 try? await coordinator.updateProviderState(provider, state: finalState)
-                continuation.yield(finalState)
+                let finalMessage = finalState == .connected
+                    ? "Provider connected successfully."
+                    : "Provider connection failed in mock flow."
+                continuation.yield(ProviderConnectionUpdate(state: finalState, message: finalMessage))
                 continuation.finish()
             }
         }

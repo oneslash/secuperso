@@ -133,6 +133,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/ExposureViewModel.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/LoginActivityScreen.swift"
         },
         {
@@ -181,6 +185,7 @@
       "moduleOutputPath" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/Modules/SecuPersoFeatures.swiftmodule",
       "objects" : [
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/EmailExposureScreen.swift.o",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/ExposureViewModel.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/LoginActivityScreen.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/MockOAuthSheet.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/OverviewScreen.swift.o",
@@ -240,6 +245,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/ExposureViewModel.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoFeatures.build/LoginActivityScreen.swift.o"
         },
         {
@@ -274,6 +283,7 @@
       "prepareForIndexing" : false,
       "sources" : [
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/EmailExposureScreen.swift",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/ExposureViewModel.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/LoginActivityScreen.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/MockOAuthSheet.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/OverviewScreen.swift",
@@ -304,6 +314,14 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/SectionContainer.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/StatusPill.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
         },
         {
@@ -321,7 +339,9 @@
       "objects" : [
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/DesignTokens.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/MetricCardView.swift.o",
-        "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/RiskBadgeView.swift.o"
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/RiskBadgeView.swift.o",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/SectionContainer.swift.o",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/StatusPill.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -382,6 +402,14 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/SectionContainer.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/StatusPill.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/Modules/SecuPersoUI.swiftmodule"
         }
       ],
@@ -389,7 +417,9 @@
       "sources" : [
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/DesignTokens.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/MetricCardView.swift",
-        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift"
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/SectionContainer.swift",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/StatusPill.swift"
       ],
       "tempsPath" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build",
       "wholeModuleOptimization" : false
@@ -463,6 +493,7 @@
       "secupersofeatures",
       "-c",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/EmailExposureScreen.swift",
+      "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/ExposureViewModel.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/LoginActivityScreen.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/MockOAuthSheet.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/OverviewScreen.swift",
@@ -526,6 +557,8 @@
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/DesignTokens.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/MetricCardView.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift",
+      "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/SectionContainer.swift",
+      "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/StatusPill.swift",
       "-I",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -632,6 +665,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/ExposureViewModel.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/LoginActivityScreen.swift"
         },
         {
@@ -679,6 +716,14 @@
         {
           "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/SectionContainer.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/StatusPill.swift"
         }
       ],
       "outputFilePath" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/.build/arm64-apple-macosx/debug/SecuPersoUI.build/sources"

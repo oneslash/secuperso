@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Xcode user and local build state
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcuserdatad/
+*.xcuserstate
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Test artifacts
+*.xcresult

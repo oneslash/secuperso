@@ -2,8 +2,9 @@ import CryptoKit
 import Foundation
 import SecuPersoDomain
 
-public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringService, ExposureSourceConfigurationService, @unchecked Sendable {
+public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringService, ExposureSourceConfigurationService, MonitoredEmailService, @unchecked Sendable {
     public typealias DataLoader = @Sendable (URLRequest) async throws -> (Data, URLResponse)
+    public typealias Sleeper = @Sendable (Duration) async throws -> Void
 
     private static let criticalDataClasses: Set<String> = [
         "passwords",
@@ -30,7 +31,10 @@ public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringSe
     private let database: EncryptedSQLiteDatabase?
     private let dataLoader: DataLoader
     private let nowProvider: @Sendable () -> Date
+    private let requestInterval: Duration
+    private let sleeper: Sleeper
     private let streamStore = StreamStore<[ExposureRecord]>(initialValue: [])
+    private let migrationState = MigrationState()
 
     public init(
         secureStore: any SecureStore,
@@ -41,14 +45,16 @@ public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringSe
         baseURL: URL = URL(string: "https://haveibeenpwned.com")!,
         database: EncryptedSQLiteDatabase? = nil,
         dataLoader: DataLoader? = nil,
-        nowProvider: @escaping @Sendable () -> Date = Date.init
+        nowProvider: @escaping @Sendable () -> Date = Date.init,
+        requestInterval: Duration = .seconds(2),
+        sleeper: Sleeper? = nil
     ) {
         self.configurationStore = ExposureSourceConfigurationStore(
             secureStore: secureStore,
             preferences: SendableUserDefaults(preferences),
             apiKeyIdentifier: apiKeyIdentifier,
-            emailDefaultsKey: emailDefaultsKey,
             userAgentDefaultsKey: userAgentDefaultsKey,
+            legacyEmailDefaultsKey: emailDefaultsKey,
             defaultUserAgent: Self.defaultUserAgent
         )
         self.baseURL = baseURL
@@ -57,6 +63,10 @@ public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringSe
             try await URLSession.shared.data(for: request)
         }
         self.nowProvider = nowProvider
+        self.requestInterval = requestInterval
+        self.sleeper = sleeper ?? { duration in
+            try await Task.sleep(for: duration)
+        }
     }
 
     public func loadConfiguration() async throws -> ExposureSourceConfiguration {
@@ -69,11 +79,82 @@ public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringSe
         try await configurationStore.saveConfiguration(sanitized)
     }
 
+    public func listMonitoredEmails() async throws -> [MonitoredEmailAddress] {
+        try await migrateLegacyMonitoredEmailIfNeeded()
+        guard let database else {
+            return []
+        }
+
+        return try database.fetchMonitoredEmails()
+    }
+
+    public func addMonitoredEmail(_ email: String, providerHint: ProviderID) async throws -> MonitoredEmailAddress {
+        guard let database else {
+            throw SecuPersoDataError.sqliteFailure("Monitored email storage is unavailable.")
+        }
+
+        try await migrateLegacyMonitoredEmailIfNeeded()
+
+        let normalizedEmail = Self.normalizeEmail(email)
+        guard !normalizedEmail.isEmpty else {
+            throw SecuPersoDataError.invalidRemoteConfiguration("Monitored email cannot be empty.")
+        }
+        guard Self.isValidEmail(normalizedEmail) else {
+            throw SecuPersoDataError.invalidRemoteConfiguration("Monitored email format is invalid.")
+        }
+
+        let existing = try database.fetchMonitoredEmails()
+        if existing.contains(where: { Self.normalizeEmail($0.email) == normalizedEmail }) {
+            throw SecuPersoDataError.duplicateMonitoredEmail
+        }
+
+        let monitoredEmail = MonitoredEmailAddress(
+            id: UUID(),
+            email: normalizedEmail,
+            providerHint: providerHint,
+            isEnabled: true,
+            createdAt: nowProvider(),
+            lastCheckedAt: nil
+        )
+
+        try database.upsertMonitoredEmail(monitoredEmail)
+        try database.appendAuditEvent("Added monitored email: \(normalizedEmail)")
+        return monitoredEmail
+    }
+
+    public func setMonitoredEmailEnabled(id: UUID, isEnabled: Bool) async throws {
+        guard let database else {
+            throw SecuPersoDataError.sqliteFailure("Monitored email storage is unavailable.")
+        }
+
+        guard var existing = try database.fetchMonitoredEmail(id: id) else {
+            throw SecuPersoDataError.monitoredEmailNotFound(id)
+        }
+
+        existing.isEnabled = isEnabled
+        try database.upsertMonitoredEmail(existing)
+        try database.appendAuditEvent("Updated monitored email \(existing.email) enabled=\(isEnabled)")
+    }
+
+    public func removeMonitoredEmail(id: UUID) async throws {
+        guard let database else {
+            throw SecuPersoDataError.sqliteFailure("Monitored email storage is unavailable.")
+        }
+
+        guard let monitored = try database.fetchMonitoredEmail(id: id) else {
+            throw SecuPersoDataError.monitoredEmailNotFound(id)
+        }
+
+        try database.removeMonitoredEmail(id: id)
+        try database.appendAuditEvent("Removed monitored email: \(monitored.email)")
+        streamStore.publish(try database.fetchExposures())
+    }
+
     public func refresh() async throws -> [ExposureRecord] {
         let rawConfiguration = try await loadConfiguration()
-        let sanitized = Self.sanitize(rawConfiguration)
+        let configuration = Self.sanitize(rawConfiguration)
 
-        guard sanitized.isComplete else {
+        guard configuration.isComplete else {
             if let database {
                 try database.replaceExposures([])
             }
@@ -81,19 +162,72 @@ public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringSe
             return []
         }
 
-        let configuration = try HaveIBeenPwnedRequestConfiguration(
-            apiKey: sanitized.apiKey,
-            monitoredEmail: sanitized.email,
-            userAgent: sanitized.userAgent,
-            baseURL: baseURL
-        )
+        let enabledEmails = try await listMonitoredEmails()
+            .filter(\.isEnabled)
 
-        let exposures = try await fetchExposures(using: configuration)
-        if let database {
-            try database.replaceExposures(exposures)
-            try database.appendAuditEvent("Refreshed exposures from HIBP for \(sanitized.email)")
+        guard !enabledEmails.isEmpty else {
+            if let database {
+                try database.replaceExposures([])
+            }
+            streamStore.publish([])
+            return []
         }
+
+        guard let database else {
+            throw SecuPersoDataError.sqliteFailure("Exposure refresh requires local database support.")
+        }
+
+        var attemptedCount = 0
+        var succeededCount = 0
+        var failedCount = 0
+        var warnings: [String] = []
+
+        for (index, monitoredEmail) in enabledEmails.enumerated() {
+            if index > 0 {
+                try await sleeper(requestInterval)
+            }
+
+            attemptedCount += 1
+            do {
+                let outcome = try await fetchExposureOutcome(email: monitoredEmail.email, configuration: configuration)
+                let scopeFingerprint = database.emailFingerprint(for: monitoredEmail.email)
+
+                switch outcome {
+                case .findings(let records):
+                    try database.replaceExposures(forEmailFingerprint: scopeFingerprint, findingRecords: records)
+                case .clear:
+                    try database.replaceExposures(forEmailFingerprint: scopeFingerprint, findingRecords: [])
+                }
+
+                var updatedMonitored = monitoredEmail
+                updatedMonitored.lastCheckedAt = nowProvider()
+                try database.upsertMonitoredEmail(updatedMonitored)
+                succeededCount += 1
+            } catch let error as SecuPersoDataError {
+                if case .exposureBatchAborted(let reason) = error {
+                    try database.appendAuditEvent(
+                        "Exposure refresh aborted after \(attemptedCount) email(s): \(reason)"
+                    )
+                    throw error
+                }
+                failedCount += 1
+                warnings.append("\(monitoredEmail.email): \(error.localizedDescription)")
+            } catch {
+                failedCount += 1
+                warnings.append("\(monitoredEmail.email): \(error.localizedDescription)")
+            }
+        }
+
+        let exposures = try database.fetchExposures()
         streamStore.publish(exposures)
+
+        var audit = "Refreshed HIBP exposures for \(enabledEmails.count) monitored email(s); success=\(succeededCount), failed=\(failedCount), open=\(exposures.filter { $0.status == .open }.count)."
+        if !warnings.isEmpty {
+            let warningSuffix = warnings.joined(separator: " | ")
+            audit += " Warnings: \(warningSuffix)"
+        }
+        try database.appendAuditEvent(audit)
+
         return exposures
     }
 
@@ -101,8 +235,48 @@ public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringSe
         streamStore.makeStream()
     }
 
-    private func fetchExposures(using configuration: HaveIBeenPwnedRequestConfiguration) async throws -> [ExposureRecord] {
-        let request = try makeRequest(using: configuration)
+    private func migrateLegacyMonitoredEmailIfNeeded() async throws {
+        guard let database else { return }
+        guard await migrationState.markMigrationAsNeeded() else {
+            return
+        }
+
+        do {
+            let existing = try database.fetchMonitoredEmails()
+            guard existing.isEmpty else {
+                return
+            }
+
+            let legacyEmail = Self.normalizeEmail(await configurationStore.loadLegacyMonitoredEmail())
+            guard !legacyEmail.isEmpty else {
+                return
+            }
+
+            guard Self.isValidEmail(legacyEmail) else {
+                try database.appendAuditEvent("Skipped invalid legacy monitored email during migration.")
+                return
+            }
+
+            let migrated = MonitoredEmailAddress(
+                id: UUID(),
+                email: legacyEmail,
+                providerHint: .other,
+                isEnabled: true,
+                createdAt: nowProvider(),
+                lastCheckedAt: nil
+            )
+            try database.upsertMonitoredEmail(migrated)
+            try database.appendAuditEvent("Migrated legacy monitored email configuration into monitored email store.")
+        } catch {
+            throw SecuPersoDataError.migrationFailure(error.localizedDescription)
+        }
+    }
+
+    private func fetchExposureOutcome(
+        email: String,
+        configuration: ExposureSourceConfiguration
+    ) async throws -> ExposureFetchOutcome {
+        let request = try makeRequest(email: email, configuration: configuration)
         let (data, response) = try await dataLoader(request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -115,28 +289,33 @@ public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringSe
             do {
                 let breaches = try decoder.decode([HIBPBreach].self, from: data)
                 let now = nowProvider()
-                return breaches
-                    .map { Self.mapBreach($0, email: configuration.monitoredEmail, now: now) }
+                let findings = breaches
+                    .map { Self.mapBreach($0, email: email, now: now) }
                     .sorted(by: { $0.foundAt > $1.foundAt })
+                return .findings(findings)
             } catch {
                 throw SecuPersoDataError.remoteDecodeFailure
             }
         case 404:
-            return []
+            return .clear
         case 401:
-            throw SecuPersoDataError.remoteRequestRejected(
-                statusCode: 401,
-                message: "HIBP key was rejected. Update the API key in Settings."
+            throw SecuPersoDataError.exposureBatchAborted(
+                reason: "HIBP key was rejected. Update the API key in Settings."
             )
         case 403:
-            throw SecuPersoDataError.remoteRequestRejected(
-                statusCode: 403,
-                message: "HIBP rejected the request. Verify user-agent in Settings."
+            throw SecuPersoDataError.exposureBatchAborted(
+                reason: "HIBP rejected the request. Verify user-agent in Settings."
             )
         case 429:
+            let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After")
+            let suffix = retryAfter.map { " Retry after \($0) seconds." } ?? ""
+            throw SecuPersoDataError.exposureBatchAborted(
+                reason: "HIBP rate limit reached.\(suffix)"
+            )
+        case 500...599:
             throw SecuPersoDataError.remoteRequestRejected(
-                statusCode: 429,
-                message: "HIBP rate limit reached. Retry later."
+                statusCode: httpResponse.statusCode,
+                message: "HIBP is temporarily unavailable."
             )
         default:
             throw SecuPersoDataError.remoteRequestRejected(
@@ -146,9 +325,9 @@ public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringSe
         }
     }
 
-    private func makeRequest(using configuration: HaveIBeenPwnedRequestConfiguration) throws -> URLRequest {
-        let encodedEmail = Self.encodePathComponent(configuration.monitoredEmail)
-        guard var components = URLComponents(url: configuration.baseURL, resolvingAgainstBaseURL: false) else {
+    private func makeRequest(email: String, configuration: ExposureSourceConfiguration) throws -> URLRequest {
+        let encodedEmail = Self.encodePathComponent(email)
+        guard var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false) else {
             throw SecuPersoDataError.invalidRemoteConfiguration("Unable to construct HIBP endpoint URL.")
         }
 
@@ -283,47 +462,42 @@ public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringSe
         return dateOnly.date(from: rawValue)
     }
 
+    private static func normalizeEmail(_ email: String) -> String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private static func isValidEmail(_ email: String) -> Bool {
+        let pattern = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        return email.range(of: pattern, options: .regularExpression) != nil
+    }
+
     private static func sanitize(_ configuration: ExposureSourceConfiguration) -> ExposureSourceConfiguration {
         let apiKey = configuration.apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        let email = configuration.email.trimmingCharacters(in: .whitespacesAndNewlines)
 
         var userAgent = configuration.userAgent.trimmingCharacters(in: .whitespacesAndNewlines)
         if userAgent.isEmpty {
             userAgent = defaultUserAgent
         }
 
-        return ExposureSourceConfiguration(apiKey: apiKey, email: email, userAgent: userAgent)
+        return ExposureSourceConfiguration(apiKey: apiKey, userAgent: userAgent)
     }
-
 }
 
-private struct HaveIBeenPwnedRequestConfiguration: Sendable {
-    let apiKey: String
-    let monitoredEmail: String
-    let userAgent: String
-    let baseURL: URL
+private actor MigrationState {
+    private var didAttemptMigration = false
 
-    init(
-        apiKey: String,
-        monitoredEmail: String,
-        userAgent: String,
-        baseURL: URL
-    ) throws {
-        guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw SecuPersoDataError.invalidRemoteConfiguration("HIBP API key is empty.")
+    func markMigrationAsNeeded() -> Bool {
+        guard !didAttemptMigration else {
+            return false
         }
-        guard !monitoredEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw SecuPersoDataError.invalidRemoteConfiguration("HIBP monitored email is empty.")
-        }
-        guard !userAgent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw SecuPersoDataError.invalidRemoteConfiguration("HIBP user-agent is empty.")
-        }
-
-        self.apiKey = apiKey
-        self.monitoredEmail = monitoredEmail
-        self.userAgent = userAgent
-        self.baseURL = baseURL
+        didAttemptMigration = true
+        return true
     }
+}
+
+private enum ExposureFetchOutcome {
+    case findings([ExposureRecord])
+    case clear
 }
 
 private struct HIBPBreach: Decodable, Sendable {

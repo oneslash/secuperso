@@ -1,58 +1,257 @@
 import Foundation
+import SecuPersoDomain
 
-public enum AppSection: String, CaseIterable, Identifiable {
+public enum AppSection: String, CaseIterable, Identifiable, Sendable {
     case overview
-    case emailExposure
-    case loginActivity
+    case exposure
+    case activity
     case settings
+
+    public static let primaryCases: [AppSection] = [.overview, .exposure, .activity]
+    public static let utilityCases: [AppSection] = [.settings]
 
     public var id: String { rawValue }
 
-    var title: String {
+    public var title: String {
         switch self {
         case .overview:
             return "Overview"
-        case .emailExposure:
-            return "Email Exposure"
-        case .loginActivity:
-            return "Login Activity"
+        case .exposure:
+            return "Exposure"
+        case .activity:
+            return "Activity"
         case .settings:
             return "Settings"
         }
     }
 
-    var symbol: String {
+    public var symbol: String {
         switch self {
         case .overview:
             return "shield.lefthalf.filled"
-        case .emailExposure:
-            return "envelope.badge"
-        case .loginActivity:
-            return "person.badge.shield.checkmark"
+        case .exposure:
+            return "envelope.badge.shield.half.filled"
+        case .activity:
+            return "clock.arrow.trianglehead.counterclockwise.rotate.90"
         case .settings:
             return "gearshape"
         }
     }
 }
 
-public enum ExposureFilter: String, CaseIterable, Identifiable {
+public enum ActivityFeedFilter: String, CaseIterable, Identifiable, Sendable {
+    case needsAttention
     case all
-    case open
-    case resolved
-    case highSeverity
 
     public var id: String { rawValue }
 
-    var title: String {
+    public var title: String {
         switch self {
+        case .needsAttention:
+            return "Needs attention"
         case .all:
-            return "All"
-        case .open:
-            return "Open"
-        case .resolved:
-            return "Resolved"
-        case .highSeverity:
-            return "High"
+            return "All activity"
+        }
+    }
+}
+
+public struct OverviewSummary: Equatable, Sendable {
+    public let riskScore: Int
+    public let riskLevel: RiskLevel
+    public let headline: String
+    public let detail: String
+    public let lastUpdatedAt: Date
+
+    public init(
+        riskScore: Int,
+        riskLevel: RiskLevel,
+        headline: String,
+        detail: String,
+        lastUpdatedAt: Date
+    ) {
+        self.riskScore = riskScore
+        self.riskLevel = riskLevel
+        self.headline = headline
+        self.detail = detail
+        self.lastUpdatedAt = lastUpdatedAt
+    }
+}
+
+public struct NextAction: Equatable, Sendable {
+    public enum Kind: Equatable, Sendable {
+        case reviewHighRiskExposure(exposureID: UUID)
+        case reviewSuspiciousLogin(loginID: UUID)
+        case reviewIncident(incidentID: UUID)
+        case connectProvider(providerID: ProviderID)
+        case runSecurityCheck
+    }
+
+    public let kind: Kind
+    public let title: String
+    public let detail: String
+    public let buttonTitle: String
+    public let destinationSection: AppSection
+
+    public init(kind: Kind, title: String, detail: String, buttonTitle: String, destinationSection: AppSection) {
+        self.kind = kind
+        self.title = title
+        self.detail = detail
+        self.buttonTitle = buttonTitle
+        self.destinationSection = destinationSection
+    }
+}
+
+public struct AccountCardSummary: Identifiable, Equatable, Sendable {
+    public var id: ProviderID { providerID }
+    public let providerID: ProviderID
+    public let providerName: String
+    public let details: String
+    public let connectionState: ConnectionState
+    public let suspiciousLoginCount: Int
+    public let latestLoginAt: Date?
+    public let latestLoginSummary: String?
+    public let needsAttention: Bool
+
+    public init(
+        providerID: ProviderID,
+        providerName: String,
+        details: String,
+        connectionState: ConnectionState,
+        suspiciousLoginCount: Int,
+        latestLoginAt: Date?,
+        latestLoginSummary: String?,
+        needsAttention: Bool
+    ) {
+        self.providerID = providerID
+        self.providerName = providerName
+        self.details = details
+        self.connectionState = connectionState
+        self.suspiciousLoginCount = suspiciousLoginCount
+        self.latestLoginAt = latestLoginAt
+        self.latestLoginSummary = latestLoginSummary
+        self.needsAttention = needsAttention
+    }
+}
+
+public struct ExposureSummary: Equatable, Sendable {
+    public let openCount: Int
+    public let highRiskOpenCount: Int
+    public let affectedEmailCount: Int
+    public let mostRecentAt: Date?
+    public let headline: String
+    public let detail: String
+
+    public init(
+        openCount: Int,
+        highRiskOpenCount: Int,
+        affectedEmailCount: Int,
+        mostRecentAt: Date?,
+        headline: String,
+        detail: String
+    ) {
+        self.openCount = openCount
+        self.highRiskOpenCount = highRiskOpenCount
+        self.affectedEmailCount = affectedEmailCount
+        self.mostRecentAt = mostRecentAt
+        self.headline = headline
+        self.detail = detail
+    }
+}
+
+public struct ActivityFeedItem: Identifiable, Equatable, Sendable {
+    public enum Kind: String, Sendable {
+        case exposure
+        case login
+        case incident
+    }
+
+    public enum Severity: String, Sendable {
+        case neutral
+        case caution
+        case warning
+    }
+
+    public let id: String
+    public let kind: Kind
+    public let date: Date
+    public let title: String
+    public let detail: String
+    public let severity: Severity
+    public let needsAttention: Bool
+    public let actions: [ActivityFeedAction]
+
+    public init(
+        id: String,
+        kind: Kind,
+        date: Date,
+        title: String,
+        detail: String,
+        severity: Severity,
+        needsAttention: Bool,
+        actions: [ActivityFeedAction]
+    ) {
+        self.id = id
+        self.kind = kind
+        self.date = date
+        self.title = title
+        self.detail = detail
+        self.severity = severity
+        self.needsAttention = needsAttention
+        self.actions = actions
+    }
+}
+
+public struct ActivityFeedAction: Identifiable, Equatable, Hashable, Sendable {
+    public let id: String
+    public let title: String
+    public let kind: PendingConfirmationAction.Kind
+
+    public init(id: String, title: String, kind: PendingConfirmationAction.Kind) {
+        self.id = id
+        self.title = title
+        self.kind = kind
+    }
+}
+
+public struct PendingConfirmationAction: Identifiable, Equatable, Sendable {
+    public enum Kind: Equatable, Hashable, Sendable {
+        case markLoginAsExpected(loginID: UUID)
+        case createIncident(loginID: UUID)
+        case resolveIncident(incidentID: UUID)
+    }
+
+    public let id: String
+    public let title: String
+    public let message: String
+    public let confirmTitle: String
+    public let isDestructive: Bool
+    public let kind: Kind
+
+    public init(
+        title: String,
+        message: String,
+        confirmTitle: String,
+        isDestructive: Bool,
+        kind: Kind
+    ) {
+        self.id = kind.identifier
+        self.title = title
+        self.message = message
+        self.confirmTitle = confirmTitle
+        self.isDestructive = isDestructive
+        self.kind = kind
+    }
+}
+
+private extension PendingConfirmationAction.Kind {
+    var identifier: String {
+        switch self {
+        case let .markLoginAsExpected(loginID):
+            return "mark-login-\(loginID.uuidString)"
+        case let .createIncident(loginID):
+            return "create-incident-\(loginID.uuidString)"
+        case let .resolveIncident(incidentID):
+            return "resolve-incident-\(incidentID.uuidString)"
         }
     }
 }

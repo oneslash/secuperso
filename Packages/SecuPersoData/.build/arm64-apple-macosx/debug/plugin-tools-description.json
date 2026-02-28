@@ -48,6 +48,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MicrosoftOAuth.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MockDataCoordinator.swift"
         },
         {
@@ -85,6 +89,7 @@
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/FixtureDataLoader.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/HaveIBeenPwnedExposureMonitoringService.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/KeychainSecureStore.swift.o",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MicrosoftOAuth.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MockDataCoordinator.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MockServices.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/SecuPersoDataError.swift.o",
@@ -161,6 +166,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MicrosoftOAuth.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MockDataCoordinator.swift.o"
         },
         {
@@ -188,6 +197,7 @@
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/FixtureDataLoader.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/HaveIBeenPwnedExposureMonitoringService.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/KeychainSecureStore.swift",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MicrosoftOAuth.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MockDataCoordinator.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MockServices.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/SecuPersoDataError.swift",
@@ -319,6 +329,7 @@
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/FixtureDataLoader.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/HaveIBeenPwnedExposureMonitoringService.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/KeychainSecureStore.swift",
+      "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MicrosoftOAuth.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MockDataCoordinator.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MockServices.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/SecuPersoDataError.swift",
@@ -476,6 +487,10 @@
         {
           "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/KeychainSecureStore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MicrosoftOAuth.swift"
         },
         {
           "kind" : "file",

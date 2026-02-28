@@ -57,6 +57,8 @@
         "-incremental",
         "-enable-batch-mode",
         "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/index/store",
         "-Onone",
         "-enable-testing",
         "-j12",
@@ -135,6 +137,14 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/SectionContainer.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/StatusPill.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
         },
         {
@@ -152,7 +162,9 @@
       "objects" : [
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/SecuPersoUI.build/DesignTokens.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/SecuPersoUI.build/MetricCardView.swift.o",
-        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/SecuPersoUI.build/RiskBadgeView.swift.o"
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/SecuPersoUI.build/RiskBadgeView.swift.o",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/SecuPersoUI.build/SectionContainer.swift.o",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/SecuPersoUI.build/StatusPill.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -160,6 +172,8 @@
         "-incremental",
         "-enable-batch-mode",
         "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/index/store",
         "-Onone",
         "-enable-testing",
         "-j12",
@@ -214,7 +228,9 @@
       "sources" : [
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/DesignTokens.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/MetricCardView.swift",
-        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift"
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/SectionContainer.swift",
+        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/StatusPill.swift"
       ],
       "tempsPath" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/SecuPersoUI.build",
       "wholeModuleOptimization" : false
@@ -241,6 +257,8 @@
       "-incremental",
       "-enable-batch-mode",
       "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/index/store",
       "-Onone",
       "-enable-testing",
       "-j12",
@@ -296,6 +314,8 @@
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/DesignTokens.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/MetricCardView.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift",
+      "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/SectionContainer.swift",
+      "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/StatusPill.swift",
       "-I",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -303,6 +323,8 @@
       "-incremental",
       "-enable-batch-mode",
       "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/index/store",
       "-Onone",
       "-enable-testing",
       "-j12",
@@ -409,6 +431,14 @@
         {
           "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/SectionContainer.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/StatusPill.swift"
         }
       ],
       "outputFilePath" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/index-build/arm64-apple-macosx/debug/SecuPersoUI.build/sources"

@@ -11,14 +11,18 @@
 		16D05168B48FB247E2700F62 /* SecuPersoData in Frameworks */ = {isa = PBXBuildFile; productRef = 09190AF84FB78D245F0341EA /* SecuPersoData */; };
 		171C338D9E6349C9C7FE5F06 /* FixtureDataLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C382CC4959732A92D2F3C27B /* FixtureDataLoaderTests.swift */; };
 		18BE1C7463ABBFF70704C6F9 /* providers.json in Resources */ = {isa = PBXBuildFile; fileRef = 16B5446C6FB4318C033DDE4F /* providers.json */; };
+		292CCE034382EF06BC728F8C /* WebAuthenticationSessionAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE05F3BA355A6E516F30FF1E /* WebAuthenticationSessionAdapter.swift */; };
 		5458B876877E3E482D8304F5 /* MockProviderConnectionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D60C7162F15B7E5672C674A /* MockProviderConnectionServiceTests.swift */; };
 		6261497CB9E0DF4744C879AE /* SecuPersoFeatures in Frameworks */ = {isa = PBXBuildFile; productRef = E7FC27C9AA8011686B0D9B17 /* SecuPersoFeatures */; };
+		68CAD1C259A55907CF26C805 /* MicrosoftOutlookOAuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5889BBAEF561CB05ED59A2C /* MicrosoftOutlookOAuthServiceTests.swift */; };
 		6AA10D9679D39B47D6ED6EC9 /* login_events.json in Resources */ = {isa = PBXBuildFile; fileRef = F25C5DFE5FF1F5464083A1AF /* login_events.json */; };
 		6CB0C2DFB738CDAB8C7FFD7D /* SecuPersoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 919F8D27AA4524BB37E0C15E /* SecuPersoApp.swift */; };
 		747C5A0293C6C2CA94618CEC /* SecuPersoDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 59B25A32E2BE5A1FEA68949A /* SecuPersoDomain */; };
+		75731CD107A2EDC0B6D3B4E1 /* AppSectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A766A39C40F14A775FCEC2 /* AppSectionTests.swift */; };
 		796418BF1D6984EE7E5E6A6E /* HaveIBeenPwnedExposureMonitoringServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F2C40E6DBF7D94BB64FD8B /* HaveIBeenPwnedExposureMonitoringServiceTests.swift */; };
 		802C9A1FDCF6D59791514124 /* SecuPersoDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 2BFE82322F887FD5757A0022 /* SecuPersoDomain */; };
 		932E59DB2BD87C7F71708C06 /* SecuPersoFeatures in Frameworks */ = {isa = PBXBuildFile; productRef = A6AA6045C7C2C7C7568FB7E0 /* SecuPersoFeatures */; };
+		94AD34FB07707A93A4FBAB16 /* ExposureViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96724392FCC4DF05678E149 /* ExposureViewModelTests.swift */; };
 		9B9C878F727D807F1A065BBF /* SecuPersoData in Frameworks */ = {isa = PBXBuildFile; productRef = AA1F2A48D6C787D8EA1C248E /* SecuPersoData */; };
 		BA9B882F943001C4928D866D /* exposures.json in Resources */ = {isa = PBXBuildFile; fileRef = 5014F6DEB10C168CEF4A76AC /* exposures.json */; };
 		C9ACE4D924E188FDFC94C928 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27C68A75398E40D17096CB9A /* AppContainer.swift */; };
@@ -32,6 +36,7 @@
 		094D0677FB400B41159985FC /* EncryptionAndDatabaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncryptionAndDatabaseTests.swift; sourceTree = "<group>"; };
 		16B5446C6FB4318C033DDE4F /* providers.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = providers.json; sourceTree = "<group>"; };
 		27C68A75398E40D17096CB9A /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
+		28A766A39C40F14A775FCEC2 /* AppSectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSectionTests.swift; sourceTree = "<group>"; };
 		3D60C7162F15B7E5672C674A /* MockProviderConnectionServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockProviderConnectionServiceTests.swift; sourceTree = "<group>"; };
 		4480C47E20D13F0EEFB69D64 /* SecuPerso.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SecuPerso.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5014F6DEB10C168CEF4A76AC /* exposures.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = exposures.json; sourceTree = "<group>"; };
@@ -44,9 +49,12 @@
 		919F8D27AA4524BB37E0C15E /* SecuPersoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecuPersoApp.swift; sourceTree = "<group>"; };
 		B30AC5C385CB71BE51CBC94B /* RiskScoringEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RiskScoringEngineTests.swift; sourceTree = "<group>"; };
 		C382CC4959732A92D2F3C27B /* FixtureDataLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixtureDataLoaderTests.swift; sourceTree = "<group>"; };
+		C5889BBAEF561CB05ED59A2C /* MicrosoftOutlookOAuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrosoftOutlookOAuthServiceTests.swift; sourceTree = "<group>"; };
 		DA15ABFDEA4C0B17DAD3A508 /* SecuPersoFeatures */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SecuPersoFeatures; path = Packages/SecuPersoFeatures; sourceTree = SOURCE_ROOT; };
 		DDD7014509B7AC7746E7D3D0 /* SecurityConsoleViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityConsoleViewModelTests.swift; sourceTree = "<group>"; };
+		DE05F3BA355A6E516F30FF1E /* WebAuthenticationSessionAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAuthenticationSessionAdapter.swift; sourceTree = "<group>"; };
 		F25C5DFE5FF1F5464083A1AF /* login_events.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = login_events.json; sourceTree = "<group>"; };
+		F96724392FCC4DF05678E149 /* ExposureViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExposureViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,9 +117,12 @@
 		C887F110DAC312875F1F80F7 /* SecuPersoTests */ = {
 			isa = PBXGroup;
 			children = (
+				28A766A39C40F14A775FCEC2 /* AppSectionTests.swift */,
 				094D0677FB400B41159985FC /* EncryptionAndDatabaseTests.swift */,
+				F96724392FCC4DF05678E149 /* ExposureViewModelTests.swift */,
 				C382CC4959732A92D2F3C27B /* FixtureDataLoaderTests.swift */,
 				81F2C40E6DBF7D94BB64FD8B /* HaveIBeenPwnedExposureMonitoringServiceTests.swift */,
+				C5889BBAEF561CB05ED59A2C /* MicrosoftOutlookOAuthServiceTests.swift */,
 				3D60C7162F15B7E5672C674A /* MockProviderConnectionServiceTests.swift */,
 				B30AC5C385CB71BE51CBC94B /* RiskScoringEngineTests.swift */,
 				DDD7014509B7AC7746E7D3D0 /* SecurityConsoleViewModelTests.swift */,
@@ -126,6 +137,7 @@
 				27C68A75398E40D17096CB9A /* AppContainer.swift */,
 				83FF9330B747D05915546A61 /* LocalNotificationManager.swift */,
 				919F8D27AA4524BB37E0C15E /* SecuPersoApp.swift */,
+				DE05F3BA355A6E516F30FF1E /* WebAuthenticationSessionAdapter.swift */,
 			);
 			name = SecuPersoApp;
 			path = App/SecuPersoApp;
@@ -249,6 +261,7 @@
 				C9ACE4D924E188FDFC94C928 /* AppContainer.swift in Sources */,
 				021AAB3D551435DE4F18A0BB /* LocalNotificationManager.swift in Sources */,
 				6CB0C2DFB738CDAB8C7FFD7D /* SecuPersoApp.swift in Sources */,
+				292CCE034382EF06BC728F8C /* WebAuthenticationSessionAdapter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,9 +269,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				75731CD107A2EDC0B6D3B4E1 /* AppSectionTests.swift in Sources */,
 				FB61FAF57B05AA90144224FF /* EncryptionAndDatabaseTests.swift in Sources */,
+				94AD34FB07707A93A4FBAB16 /* ExposureViewModelTests.swift in Sources */,
 				171C338D9E6349C9C7FE5F06 /* FixtureDataLoaderTests.swift in Sources */,
 				796418BF1D6984EE7E5E6A6E /* HaveIBeenPwnedExposureMonitoringServiceTests.swift in Sources */,
+				68CAD1C259A55907CF26C805 /* MicrosoftOutlookOAuthServiceTests.swift in Sources */,
 				5458B876877E3E482D8304F5 /* MockProviderConnectionServiceTests.swift in Sources */,
 				F07E3FB24137A9C54A11512B /* RiskScoringEngineTests.swift in Sources */,
 				D4088B983C49B391A0F0E820 /* SecurityConsoleViewModelTests.swift in Sources */,
@@ -355,6 +371,11 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleURLTypes = "[{\"CFBundleURLName\":\"com.secuperso.app.auth\",\"CFBundleURLSchemes\":[\"secuperso\"]}]";
+				INFOPLIST_KEY_MS_ENTRA_CLIENT_ID = "";
+				INFOPLIST_KEY_MS_ENTRA_REDIRECT_URI = "secuperso://oauth";
+				INFOPLIST_KEY_MS_ENTRA_SCOPES = "openid profile offline_access User.Read";
+				INFOPLIST_KEY_MS_ENTRA_TENANT_ID = common;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -394,6 +415,11 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleURLTypes = "[{\"CFBundleURLName\":\"com.secuperso.app.auth\",\"CFBundleURLSchemes\":[\"secuperso\"]}]";
+				INFOPLIST_KEY_MS_ENTRA_CLIENT_ID = "";
+				INFOPLIST_KEY_MS_ENTRA_REDIRECT_URI = "secuperso://oauth";
+				INFOPLIST_KEY_MS_ENTRA_SCOPES = "openid profile offline_access User.Read";
+				INFOPLIST_KEY_MS_ENTRA_TENANT_ID = common;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

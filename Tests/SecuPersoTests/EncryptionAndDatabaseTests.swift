@@ -186,6 +186,93 @@ final class EncryptionAndDatabaseTests: XCTestCase {
         XCTAssertEqual(logins.last?.id, olderLogin.id)
     }
 
+    func testMonitoredEmailUniquenessIsEnforcedAtDatabaseLayer() throws {
+        let database = try makeDatabase()
+        let now = Date()
+
+        let first = MonitoredEmailAddress(
+            id: UUID(),
+            email: "owner@example.com",
+            providerHint: .google,
+            isEnabled: true,
+            createdAt: now,
+            lastCheckedAt: nil
+        )
+        let duplicate = MonitoredEmailAddress(
+            id: UUID(),
+            email: "OWNER@example.com",
+            providerHint: .outlook,
+            isEnabled: true,
+            createdAt: now,
+            lastCheckedAt: nil
+        )
+
+        try database.upsertMonitoredEmail(first)
+        XCTAssertThrowsError(try database.upsertMonitoredEmail(duplicate)) { error in
+            guard case SecuPersoDataError.duplicateMonitoredEmail = error else {
+                XCTFail("Expected duplicateMonitoredEmail, got \(error)")
+                return
+            }
+        }
+    }
+
+    func testRemovingMonitoredEmailCascadesOnlyItsExposures() throws {
+        let database = try makeDatabase()
+        let now = Date()
+
+        let firstEmail = MonitoredEmailAddress(
+            id: UUID(),
+            email: "first@example.com",
+            providerHint: .other,
+            isEnabled: true,
+            createdAt: now,
+            lastCheckedAt: nil
+        )
+        let secondEmail = MonitoredEmailAddress(
+            id: UUID(),
+            email: "second@example.com",
+            providerHint: .other,
+            isEnabled: true,
+            createdAt: now,
+            lastCheckedAt: nil
+        )
+
+        try database.upsertMonitoredEmail(firstEmail)
+        try database.upsertMonitoredEmail(secondEmail)
+
+        let firstFingerprint = database.emailFingerprint(for: firstEmail.email)
+        let secondFingerprint = database.emailFingerprint(for: secondEmail.email)
+
+        let firstExposure = ExposureRecord(
+            id: UUID(),
+            email: firstEmail.email,
+            source: "A",
+            foundAt: now,
+            severity: .high,
+            status: .open,
+            remediation: "Rotate"
+        )
+        let secondExposure = ExposureRecord(
+            id: UUID(),
+            email: secondEmail.email,
+            source: "B",
+            foundAt: now.addingTimeInterval(-30),
+            severity: .medium,
+            status: .open,
+            remediation: "Enable MFA"
+        )
+
+        try database.replaceExposures(forEmailFingerprint: firstFingerprint, findingRecords: [firstExposure])
+        try database.replaceExposures(forEmailFingerprint: secondFingerprint, findingRecords: [secondExposure])
+
+        try database.removeMonitoredEmail(id: firstEmail.id)
+
+        let exposures = try database.fetchExposures()
+        XCTAssertEqual(exposures.count, 1)
+        XCTAssertEqual(exposures.first?.email, secondEmail.email)
+        XCTAssertEqual(try database.fetchMonitoredEmails().count, 1)
+    }
+
     private func makeDatabase() throws -> EncryptedSQLiteDatabase {
         let databaseURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
@@ -209,5 +296,11 @@ private final class InMemorySecureStore: SecureStore, @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         storage[key] = value
+    }
+
+    func delete(_ key: String) throws {
+        lock.lock()
+        defer { lock.unlock() }
+        storage.removeValue(forKey: key)
     }
 }

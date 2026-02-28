@@ -11,7 +11,7 @@ public protocol LoginActivityService: Sendable {
 }
 
 public protocol ProviderConnectionService: Sendable {
-    func beginMockOAuth(for provider: ProviderID) async -> AsyncStream<ConnectionState>
+    func beginConnection(for provider: ProviderID) async -> AsyncStream<ProviderConnectionUpdate>
     func disconnect(_ provider: ProviderID) async throws
 }
 
@@ -23,6 +23,7 @@ public protocol IncidentService: Sendable {
 public protocol SecureStore: Sendable {
     func read(_ key: String) throws -> Data?
     func write(_ value: Data, for key: String) throws
+    func delete(_ key: String) throws
 }
 
 public protocol IncidentReadableService: Sendable {
@@ -49,4 +50,11 @@ public protocol LoginEventActionService: Sendable {
 public protocol ExposureSourceConfigurationService: Sendable {
     func loadConfiguration() async throws -> ExposureSourceConfiguration
     func saveConfiguration(_ configuration: ExposureSourceConfiguration) async throws
+}
+
+public protocol MonitoredEmailService: Sendable {
+    func listMonitoredEmails() async throws -> [MonitoredEmailAddress]
+    func addMonitoredEmail(_ email: String, providerHint: ProviderID) async throws -> MonitoredEmailAddress
+    func setMonitoredEmailEnabled(id: UUID, isEnabled: Bool) async throws
+    func removeMonitoredEmail(id: UUID) async throws
 }

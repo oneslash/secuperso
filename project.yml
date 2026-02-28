@@ -36,6 +36,11 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.secuperso.app
         PRODUCT_NAME: SecuPerso
         GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_MS_ENTRA_CLIENT_ID: ""
+        INFOPLIST_KEY_MS_ENTRA_TENANT_ID: common
+        INFOPLIST_KEY_MS_ENTRA_REDIRECT_URI: secuperso://oauth
+        INFOPLIST_KEY_MS_ENTRA_SCOPES: "openid profile offline_access User.Read"
+        INFOPLIST_KEY_CFBundleURLTypes: '[{"CFBundleURLName":"com.secuperso.app.auth","CFBundleURLSchemes":["secuperso"]}]'
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
         ENABLE_APP_SANDBOX: YES

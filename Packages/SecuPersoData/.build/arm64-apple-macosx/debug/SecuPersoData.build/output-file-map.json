@@ -44,6 +44,13 @@
     "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/KeychainSecureStore.swiftdeps",
     "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/KeychainSecureStore.dia"
   },
+  "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MicrosoftOAuth.swift": {
+    "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MicrosoftOAuth.d",
+    "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MicrosoftOAuth.swift.o",
+    "swiftmodule": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MicrosoftOAuth~partial.swiftmodule",
+    "swift-dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MicrosoftOAuth.swiftdeps",
+    "diagnostics": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MicrosoftOAuth.dia"
+  },
   "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/Sources/SecuPersoData/MockDataCoordinator.swift": {
     "dependencies": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MockDataCoordinator.d",
     "object": "/Users/sardo/Projects/secuperso/Packages/SecuPersoData/.build/arm64-apple-macosx/debug/SecuPersoData.build/MockDataCoordinator.swift.o",

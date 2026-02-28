@@ -1,3 +1,4 @@
+import CryptoKit
 import XCTest
 import SecuPersoData
 import SecuPersoDomain
@@ -8,9 +9,11 @@ final class HaveIBeenPwnedExposureMonitoringServiceTests: XCTestCase {
         let (preferences, suiteName) = makePreferences()
         defer { preferences.removePersistentDomain(forName: suiteName) }
 
+        let database = try makeDatabase()
         let service = HaveIBeenPwnedExposureMonitoringService(
             secureStore: TestSecureStore(),
             preferences: preferences,
+            database: database,
             dataLoader: { request in
                 await recorder.record(request)
                 let payload = """
@@ -40,10 +43,10 @@ final class HaveIBeenPwnedExposureMonitoringServiceTests: XCTestCase {
         try await service.saveConfiguration(
             ExposureSourceConfiguration(
                 apiKey: "test-api-key",
-                email: "owner@example.com",
                 userAgent: "SecuPersoTests/1.0"
             )
         )
+        _ = try await service.addMonitoredEmail("owner@example.com", providerHint: .other)
 
         let exposures = try await service.refresh()
         let request = await recorder.firstRequest()
@@ -63,9 +66,11 @@ final class HaveIBeenPwnedExposureMonitoringServiceTests: XCTestCase {
         let (preferences, suiteName) = makePreferences()
         defer { preferences.removePersistentDomain(forName: suiteName) }
 
+        let database = try makeDatabase()
         let service = HaveIBeenPwnedExposureMonitoringService(
             secureStore: TestSecureStore(),
             preferences: preferences,
+            database: database,
             dataLoader: { request in
                 await recorder.record(request)
                 let response = HTTPURLResponse(
@@ -79,8 +84,9 @@ final class HaveIBeenPwnedExposureMonitoringServiceTests: XCTestCase {
         )
 
         try await service.saveConfiguration(
-            ExposureSourceConfiguration(apiKey: "", email: "owner@example.com", userAgent: "SecuPersoTests/1.0")
+            ExposureSourceConfiguration(apiKey: "", userAgent: "SecuPersoTests/1.0")
         )
+        _ = try await service.addMonitoredEmail("owner@example.com", providerHint: .other)
 
         let exposures = try await service.refresh()
         let requestCount = await recorder.requestCount()
@@ -89,13 +95,15 @@ final class HaveIBeenPwnedExposureMonitoringServiceTests: XCTestCase {
         XCTAssertEqual(requestCount, 0)
     }
 
-    func testRefreshThrowsUnauthorizedErrorForInvalidKey() async throws {
+    func testRefreshThrowsBatchAbortForInvalidKey() async throws {
         let (preferences, suiteName) = makePreferences()
         defer { preferences.removePersistentDomain(forName: suiteName) }
 
+        let database = try makeDatabase()
         let service = HaveIBeenPwnedExposureMonitoringService(
             secureStore: TestSecureStore(),
             preferences: preferences,
+            database: database,
             dataLoader: { request in
                 let response = HTTPURLResponse(
                     url: request.url!,
@@ -108,28 +116,120 @@ final class HaveIBeenPwnedExposureMonitoringServiceTests: XCTestCase {
         )
 
         try await service.saveConfiguration(
-            ExposureSourceConfiguration(apiKey: "bad-key", email: "owner@example.com", userAgent: "SecuPersoTests/1.0")
+            ExposureSourceConfiguration(apiKey: "bad-key", userAgent: "SecuPersoTests/1.0")
         )
+        _ = try await service.addMonitoredEmail("owner@example.com", providerHint: .other)
 
         do {
             _ = try await service.refresh()
-            XCTFail("Expected unauthorized error")
+            XCTFail("Expected batch abort error")
         } catch let error as SecuPersoDataError {
-            guard case .remoteRequestRejected(let statusCode, _) = error else {
-                XCTFail("Expected remoteRequestRejected, got \(error)")
+            guard case .exposureBatchAborted = error else {
+                XCTFail("Expected exposureBatchAborted, got \(error)")
                 return
             }
-            XCTAssertEqual(statusCode, 401)
         }
+    }
+
+    func testRemoveMonitoredEmailCascadesFindingsImmediately() async throws {
+        let (preferences, suiteName) = makePreferences()
+        defer { preferences.removePersistentDomain(forName: suiteName) }
+
+        let database = try makeDatabase()
+        let service = HaveIBeenPwnedExposureMonitoringService(
+            secureStore: TestSecureStore(),
+            preferences: preferences,
+            database: database,
+            dataLoader: { request in
+                let payload = """
+                [
+                  {
+                    "Name": "Adobe",
+                    "Title": "Adobe",
+                    "BreachDate": "2013-10-04",
+                    "AddedDate": "2025-11-03T12:30:00Z",
+                    "PwnCount": 152445165,
+                    "DataClasses": ["Email addresses", "Passwords"],
+                    "IsSensitive": false,
+                    "IsSpamList": false
+                  }
+                ]
+                """
+                let response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!
+                return (Data(payload.utf8), response)
+            }
+        )
+
+        try await service.saveConfiguration(
+            ExposureSourceConfiguration(apiKey: "test-api-key", userAgent: "SecuPersoTests/1.0")
+        )
+        let monitored = try await service.addMonitoredEmail("owner@example.com", providerHint: .other)
+
+        _ = try await service.refresh()
+        XCTAssertEqual(try database.fetchExposures().count, 1)
+
+        try await service.removeMonitoredEmail(id: monitored.id)
+        XCTAssertEqual(try database.fetchExposures().count, 0)
+    }
+
+    func testBatchStopsAfterRateLimit() async throws {
+        let recorder = RequestRecorder()
+        let (preferences, suiteName) = makePreferences()
+        defer { preferences.removePersistentDomain(forName: suiteName) }
+
+        let database = try makeDatabase()
+        let service = HaveIBeenPwnedExposureMonitoringService(
+            secureStore: TestSecureStore(),
+            preferences: preferences,
+            database: database,
+            dataLoader: { request in
+                await recorder.record(request)
+                let response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 429,
+                    httpVersion: nil,
+                    headerFields: ["Retry-After": "15"]
+                )!
+                return (Data(), response)
+            },
+            requestInterval: .zero
+        )
+
+        try await service.saveConfiguration(
+            ExposureSourceConfiguration(apiKey: "test-api-key", userAgent: "SecuPersoTests/1.0")
+        )
+        _ = try await service.addMonitoredEmail("first@example.com", providerHint: .other)
+        _ = try await service.addMonitoredEmail("second@example.com", providerHint: .other)
+
+        do {
+            _ = try await service.refresh()
+            XCTFail("Expected batch abort on 429")
+        } catch let error as SecuPersoDataError {
+            guard case .exposureBatchAborted(let reason) = error else {
+                XCTFail("Expected exposureBatchAborted, got \(error)")
+                return
+            }
+            XCTAssertTrue(reason.contains("Retry after 15"))
+        }
+
+        let requestCount = await recorder.requestCount()
+        XCTAssertEqual(requestCount, 1)
     }
 
     func testConcurrentConfigurationReadsAndWritesRemainConsistent() async throws {
         let (preferences, suiteName) = makePreferences()
         defer { preferences.removePersistentDomain(forName: suiteName) }
 
+        let database = try makeDatabase()
         let service = HaveIBeenPwnedExposureMonitoringService(
             secureStore: TestSecureStore(),
             preferences: preferences,
+            database: database,
             dataLoader: { request in
                 let response = HTTPURLResponse(
                     url: request.url!,
@@ -144,7 +244,6 @@ final class HaveIBeenPwnedExposureMonitoringServiceTests: XCTestCase {
         let configurations = (0..<20).map { index in
             ExposureSourceConfiguration(
                 apiKey: "api-\(index)",
-                email: "owner+\(index)@example.com",
                 userAgent: "SecuPersoTests/\(index)"
             )
         }
@@ -167,7 +266,6 @@ final class HaveIBeenPwnedExposureMonitoringServiceTests: XCTestCase {
 
         let finalConfiguration = try await service.loadConfiguration()
         XCTAssertFalse(finalConfiguration.apiKey.isEmpty)
-        XCTAssertFalse(finalConfiguration.email.isEmpty)
         XCTAssertFalse(finalConfiguration.userAgent.isEmpty)
     }
 
@@ -177,6 +275,16 @@ final class HaveIBeenPwnedExposureMonitoringServiceTests: XCTestCase {
             fatalError("Failed to create user defaults suite")
         }
         return (preferences, suiteName)
+    }
+
+    private func makeDatabase() throws -> EncryptedSQLiteDatabase {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("hibp-tests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return try EncryptedSQLiteDatabase(
+            databaseURL: directory.appendingPathComponent("database.sqlite", isDirectory: false),
+            key: SymmetricKey(size: .bits256)
+        )
     }
 }
 
@@ -210,5 +318,11 @@ private final class TestSecureStore: SecureStore, @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         storage[key] = value
+    }
+
+    func delete(_ key: String) throws {
+        lock.lock()
+        defer { lock.unlock() }
+        storage.removeValue(forKey: key)
     }
 }

@@ -3,26 +3,26 @@ import XCTest
 import SecuPersoData
 import SecuPersoDomain
 
-final class MicrosoftOutlookOAuthServiceTests: XCTestCase {
+final class GoogleOAuthServiceTests: XCTestCase {
     func testConnectSuccessPersistsTokenAndMarksConnected() async throws {
         let harness = try await makeHarness()
-        let authSession = ScriptedAuthorizationSession { startURL, _ in
+        let authSession = GoogleScriptedAuthorizationSession { startURL, _ in
             let state = try XCTUnwrap(Self.queryItem(named: "state", in: startURL))
             return URL(string: "secuperso://oauth?code=test-code&state=\(state)")!
         }
-        let tokenExchanger = StubTokenExchanger(
+        let tokenExchanger = GoogleStubTokenExchanger(
             result: .success(
-                MicrosoftOAuthToken(
+                GoogleOAuthToken(
                     accessToken: "access-token",
                     refreshToken: "refresh-token",
                     expiresIn: 3600,
-                    scope: "User.Read",
+                    scope: "openid profile email",
                     tokenType: "Bearer"
                 )
             )
         )
 
-        let service = MicrosoftOutlookOAuthService(
+        let service = GoogleOAuthService(
             coordinator: harness.coordinator,
             configuration: harness.configuration,
             authorizationSession: authSession,
@@ -32,27 +32,27 @@ final class MicrosoftOutlookOAuthServiceTests: XCTestCase {
 
         let updates = await collectUpdates(from: await service.beginConnection())
         XCTAssertEqual(updates.last?.state, .connected)
-        XCTAssertEqual(updates.last?.message, "Microsoft account connected.")
+        XCTAssertEqual(updates.last?.message, "Google account connected.")
         XCTAssertNotNil(try harness.tokenStore.load())
 
         let connections = try await harness.coordinator.listProviderConnections()
-        XCTAssertEqual(connections.first(where: { $0.id == .outlook })?.state, .connected)
+        XCTAssertEqual(connections.first(where: { $0.id == .google })?.state, .connected)
     }
 
     func testConnectWithoutConfigurationReturnsSetupError() async throws {
         let harness = try await makeHarness()
-        let authSession = ScriptedAuthorizationSession { _, _ in
+        let authSession = GoogleScriptedAuthorizationSession { _, _ in
             XCTFail("Authorization session should not be called when config is missing.")
             return URL(string: "secuperso://oauth")!
         }
 
-        let service = MicrosoftOutlookOAuthService(
+        let service = GoogleOAuthService(
             coordinator: harness.coordinator,
             configuration: nil,
             authorizationSession: authSession,
-            tokenExchanger: StubTokenExchanger(
+            tokenExchanger: GoogleStubTokenExchanger(
                 result: .success(
-                    MicrosoftOAuthToken(
+                    GoogleOAuthToken(
                         accessToken: "unused",
                         refreshToken: nil,
                         expiresIn: 3600,
@@ -68,23 +68,23 @@ final class MicrosoftOutlookOAuthServiceTests: XCTestCase {
         XCTAssertEqual(updates.last?.state, .error)
         XCTAssertEqual(
             updates.last?.message,
-            "Microsoft OAuth is not configured. Set MS_ENTRA_CLIENT_ID in app settings."
+            "Google OAuth is not configured. Set GOOGLE_OAUTH_CLIENT_ID in app settings."
         )
     }
 
     func testUserCancelReturnsDisconnectedWithoutPersistingToken() async throws {
         let harness = try await makeHarness()
-        let authSession = ScriptedAuthorizationSession { _, _ in
+        let authSession = GoogleScriptedAuthorizationSession { _, _ in
             throw OAuthAuthorizationSessionError.cancelled
         }
 
-        let service = MicrosoftOutlookOAuthService(
+        let service = GoogleOAuthService(
             coordinator: harness.coordinator,
             configuration: harness.configuration,
             authorizationSession: authSession,
-            tokenExchanger: StubTokenExchanger(
+            tokenExchanger: GoogleStubTokenExchanger(
                 result: .success(
-                    MicrosoftOAuthToken(
+                    GoogleOAuthToken(
                         accessToken: "unused",
                         refreshToken: nil,
                         expiresIn: 3600,
@@ -104,13 +104,13 @@ final class MicrosoftOutlookOAuthServiceTests: XCTestCase {
 
     func testTokenExchangeFailureReturnsErrorAndDoesNotPersistToken() async throws {
         let harness = try await makeHarness()
-        let authSession = ScriptedAuthorizationSession { startURL, _ in
+        let authSession = GoogleScriptedAuthorizationSession { startURL, _ in
             let state = try XCTUnwrap(Self.queryItem(named: "state", in: startURL))
             return URL(string: "secuperso://oauth?code=test-code&state=\(state)")!
         }
-        let tokenExchanger = StubTokenExchanger(result: .failure(StubError(message: "exchange failed")))
+        let tokenExchanger = GoogleStubTokenExchanger(result: .failure(GoogleStubError(message: "exchange failed")))
 
-        let service = MicrosoftOutlookOAuthService(
+        let service = GoogleOAuthService(
             coordinator: harness.coordinator,
             configuration: harness.configuration,
             authorizationSession: authSession,
@@ -120,56 +120,16 @@ final class MicrosoftOutlookOAuthServiceTests: XCTestCase {
 
         let updates = await collectUpdates(from: await service.beginConnection())
         XCTAssertEqual(updates.last?.state, .error)
-        XCTAssertEqual(updates.last?.message, "Microsoft sign-in failed. Please try again.")
+        XCTAssertEqual(updates.last?.message, "Google sign-in failed. Please try again.")
         XCTAssertNil(try harness.tokenStore.load())
     }
 
     func testDisconnectClearsTokenAndMarksProviderDisconnected() async throws {
         let harness = try await makeHarness()
-        let service = MicrosoftOutlookOAuthService(
+        let service = GoogleOAuthService(
             coordinator: harness.coordinator,
             configuration: harness.configuration,
-            authorizationSession: ScriptedAuthorizationSession { _, _ in
-                URL(string: "secuperso://oauth")!
-            },
-            tokenExchanger: StubTokenExchanger(
-                result: .success(
-                    MicrosoftOAuthToken(
-                        accessToken: "unused",
-                        refreshToken: nil,
-                        expiresIn: 3600,
-                        scope: nil,
-                        tokenType: "Bearer"
-                    )
-                )
-            ),
-            tokenStore: harness.tokenStore
-        )
-
-        try harness.tokenStore.save(
-            MicrosoftOAuthToken(
-                accessToken: "seed-token",
-                refreshToken: "seed-refresh",
-                expiresIn: 3600,
-                scope: "User.Read",
-                tokenType: "Bearer"
-            )
-        )
-
-        try await service.disconnect()
-
-        XCTAssertNil(try harness.tokenStore.load())
-        let connections = try await harness.coordinator.listProviderConnections()
-        XCTAssertEqual(connections.first(where: { $0.id == .outlook })?.state, .disconnected)
-    }
-
-    func testHybridServiceKeepsOtherMockFlowUnchanged() async throws {
-        let harness = try await makeHarness()
-        let fallback = MockProviderConnectionService(coordinator: harness.coordinator)
-        let google = GoogleOAuthService(
-            coordinator: harness.coordinator,
-            configuration: nil,
-            authorizationSession: ScriptedAuthorizationSession { _, _ in
+            authorizationSession: GoogleScriptedAuthorizationSession { _, _ in
                 URL(string: "secuperso://oauth")!
             },
             tokenExchanger: GoogleStubTokenExchanger(
@@ -183,20 +143,38 @@ final class MicrosoftOutlookOAuthServiceTests: XCTestCase {
                     )
                 )
             ),
-            tokenStore: GoogleOAuthTokenStore(
-                secureStore: InMemorySecureStore(),
-                storageKey: "test.google.oauth.token"
+            tokenStore: harness.tokenStore
+        )
+
+        try harness.tokenStore.save(
+            GoogleOAuthToken(
+                accessToken: "seed-token",
+                refreshToken: "seed-refresh",
+                expiresIn: 3600,
+                scope: "openid profile email",
+                tokenType: "Bearer"
             )
         )
-        let outlook = MicrosoftOutlookOAuthService(
+
+        try await service.disconnect()
+
+        XCTAssertNil(try harness.tokenStore.load())
+        let connections = try await harness.coordinator.listProviderConnections()
+        XCTAssertEqual(connections.first(where: { $0.id == .google })?.state, .disconnected)
+    }
+
+    func testHybridServiceKeepsOtherMockFlowUnchanged() async throws {
+        let harness = try await makeHarness()
+        let fallback = MockProviderConnectionService(coordinator: harness.coordinator)
+        let google = GoogleOAuthService(
             coordinator: harness.coordinator,
             configuration: nil,
-            authorizationSession: ScriptedAuthorizationSession { _, _ in
+            authorizationSession: GoogleScriptedAuthorizationSession { _, _ in
                 URL(string: "secuperso://oauth")!
             },
-            tokenExchanger: StubTokenExchanger(
+            tokenExchanger: GoogleStubTokenExchanger(
                 result: .success(
-                    MicrosoftOAuthToken(
+                    GoogleOAuthToken(
                         accessToken: "unused",
                         refreshToken: nil,
                         expiresIn: 3600,
@@ -207,6 +185,28 @@ final class MicrosoftOutlookOAuthServiceTests: XCTestCase {
             ),
             tokenStore: harness.tokenStore
         )
+        let outlook = MicrosoftOutlookOAuthService(
+            coordinator: harness.coordinator,
+            configuration: nil,
+            authorizationSession: GoogleScriptedAuthorizationSession { _, _ in
+                URL(string: "secuperso://oauth")!
+            },
+            tokenExchanger: GoogleMicrosoftStubTokenExchanger(
+                result: .success(
+                    MicrosoftOAuthToken(
+                        accessToken: "unused",
+                        refreshToken: nil,
+                        expiresIn: 3600,
+                        scope: nil,
+                        tokenType: "Bearer"
+                    )
+                )
+            ),
+            tokenStore: MicrosoftOAuthTokenStore(
+                secureStore: GoogleInMemorySecureStore(),
+                storageKey: "test.microsoft.oauth.tokens"
+            )
+        )
         let service = HybridProviderConnectionService(
             fallbackService: fallback,
             googleService: google,
@@ -216,6 +216,64 @@ final class MicrosoftOutlookOAuthServiceTests: XCTestCase {
         let updates = await collectUpdates(from: await service.beginConnection(for: .other))
         XCTAssertEqual(updates.last?.state, .error)
         XCTAssertEqual(updates.last?.message, "Provider connection failed in mock flow.")
+    }
+
+    func testHybridServiceRoutesGoogleToGoogleOAuthFlow() async throws {
+        let harness = try await makeHarness()
+        let fallback = MockProviderConnectionService(coordinator: harness.coordinator)
+        let google = GoogleOAuthService(
+            coordinator: harness.coordinator,
+            configuration: nil,
+            authorizationSession: GoogleScriptedAuthorizationSession { _, _ in
+                URL(string: "secuperso://oauth")!
+            },
+            tokenExchanger: GoogleStubTokenExchanger(
+                result: .success(
+                    GoogleOAuthToken(
+                        accessToken: "unused",
+                        refreshToken: nil,
+                        expiresIn: 3600,
+                        scope: nil,
+                        tokenType: "Bearer"
+                    )
+                )
+            ),
+            tokenStore: harness.tokenStore
+        )
+        let outlook = MicrosoftOutlookOAuthService(
+            coordinator: harness.coordinator,
+            configuration: nil,
+            authorizationSession: GoogleScriptedAuthorizationSession { _, _ in
+                URL(string: "secuperso://oauth")!
+            },
+            tokenExchanger: GoogleMicrosoftStubTokenExchanger(
+                result: .success(
+                    MicrosoftOAuthToken(
+                        accessToken: "unused",
+                        refreshToken: nil,
+                        expiresIn: 3600,
+                        scope: nil,
+                        tokenType: "Bearer"
+                    )
+                )
+            ),
+            tokenStore: MicrosoftOAuthTokenStore(
+                secureStore: GoogleInMemorySecureStore(),
+                storageKey: "test.microsoft.oauth.tokens"
+            )
+        )
+        let service = HybridProviderConnectionService(
+            fallbackService: fallback,
+            googleService: google,
+            outlookService: outlook
+        )
+
+        let updates = await collectUpdates(from: await service.beginConnection(for: .google))
+        XCTAssertEqual(updates.last?.state, .error)
+        XCTAssertEqual(
+            updates.last?.message,
+            "Google OAuth is not configured. Set GOOGLE_OAUTH_CLIENT_ID in app settings."
+        )
     }
 
     private static func queryItem(named name: String, in url: URL) -> String? {
@@ -233,7 +291,7 @@ final class MicrosoftOutlookOAuthServiceTests: XCTestCase {
         return updates
     }
 
-    private func makeHarness() async throws -> TestHarness {
+    private func makeHarness() async throws -> GoogleTestHarness {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
@@ -260,20 +318,19 @@ final class MicrosoftOutlookOAuthServiceTests: XCTestCase {
         )
         _ = try await coordinator.loadProviderCatalog()
 
-        let secureStore = InMemorySecureStore()
-        let tokenStore = MicrosoftOAuthTokenStore(
+        let secureStore = GoogleInMemorySecureStore()
+        let tokenStore = GoogleOAuthTokenStore(
             secureStore: secureStore,
-            storageKey: "test.microsoft.oauth.token"
+            storageKey: "test.google.oauth.tokens"
         )
 
-        let configuration = MicrosoftOAuthConfiguration(
+        let configuration = GoogleOAuthConfiguration(
             clientID: "test-client-id",
-            tenantID: "common",
             redirectURI: URL(string: "secuperso://oauth")!,
-            scopes: ["openid", "profile", "offline_access", "User.Read"]
+            scopes: ["openid", "profile", "email"]
         )
 
-        return TestHarness(
+        return GoogleTestHarness(
             coordinator: coordinator,
             configuration: configuration,
             tokenStore: tokenStore
@@ -281,17 +338,17 @@ final class MicrosoftOutlookOAuthServiceTests: XCTestCase {
     }
 }
 
-private struct TestHarness {
+private struct GoogleTestHarness {
     let coordinator: MockDataCoordinator
-    let configuration: MicrosoftOAuthConfiguration
-    let tokenStore: MicrosoftOAuthTokenStore
+    let configuration: GoogleOAuthConfiguration
+    let tokenStore: GoogleOAuthTokenStore
 }
 
-private struct StubError: Error {
+private struct GoogleStubError: Error {
     let message: String
 }
 
-private final class ScriptedAuthorizationSession: OAuthAuthorizationSession, @unchecked Sendable {
+private final class GoogleScriptedAuthorizationSession: OAuthAuthorizationSession, @unchecked Sendable {
     typealias Handler = @Sendable (_ startURL: URL, _ callbackScheme: String) throws -> URL
 
     private let handler: Handler
@@ -302,22 +359,6 @@ private final class ScriptedAuthorizationSession: OAuthAuthorizationSession, @un
 
     func authenticate(startURL: URL, callbackScheme: String) async throws -> URL {
         try handler(startURL, callbackScheme)
-    }
-}
-
-private final class StubTokenExchanger: MicrosoftOAuthTokenExchanger, @unchecked Sendable {
-    private let result: Result<MicrosoftOAuthToken, Error>
-
-    init(result: Result<MicrosoftOAuthToken, Error>) {
-        self.result = result
-    }
-
-    func exchangeCode(
-        configuration: MicrosoftOAuthConfiguration,
-        authorizationCode: String,
-        codeVerifier: String
-    ) async throws -> MicrosoftOAuthToken {
-        try result.get()
     }
 }
 
@@ -337,7 +378,23 @@ private final class GoogleStubTokenExchanger: GoogleOAuthTokenExchanger, @unchec
     }
 }
 
-private final class InMemorySecureStore: SecureStore, @unchecked Sendable {
+private final class GoogleMicrosoftStubTokenExchanger: MicrosoftOAuthTokenExchanger, @unchecked Sendable {
+    private let result: Result<MicrosoftOAuthToken, Error>
+
+    init(result: Result<MicrosoftOAuthToken, Error>) {
+        self.result = result
+    }
+
+    func exchangeCode(
+        configuration: MicrosoftOAuthConfiguration,
+        authorizationCode: String,
+        codeVerifier: String
+    ) async throws -> MicrosoftOAuthToken {
+        try result.get()
+    }
+}
+
+private final class GoogleInMemorySecureStore: SecureStore, @unchecked Sendable {
     private let lock = NSLock()
     private var storage: [String: Data] = [:]
 

@@ -39,9 +39,26 @@ final class AppContainer {
             secureStore: secureStore,
             database: database
         )
-        let loginService = MockLoginActivityService(coordinator: coordinator)
+        let fallbackLoginService = MockLoginActivityService(coordinator: coordinator)
         let incidentService = MockIncidentService(coordinator: coordinator)
         let fallbackProviderConnectionService = MockProviderConnectionService(coordinator: coordinator)
+        let googleOAuthConfiguration = Self.googleOAuthConfiguration(bundle: bundle)
+        let googleTokenStore = GoogleOAuthTokenStore(secureStore: secureStore)
+        let googleOAuthService = GoogleOAuthService(
+            coordinator: coordinator,
+            configuration: googleOAuthConfiguration,
+            authorizationSession: WebAuthenticationSessionAdapter(),
+            tokenExchanger: URLSessionGoogleOAuthTokenExchanger(),
+            tokenStore: googleTokenStore
+        )
+        let loginService = GoogleWorkspaceLoginActivityService(
+            fallbackService: fallbackLoginService,
+            oauthConfiguration: googleOAuthConfiguration,
+            tokenStore: googleTokenStore,
+            tokenRefresher: URLSessionGoogleOAuthTokenRefresher(),
+            historyClient: URLSessionGoogleWorkspaceLoginHistoryClient(),
+            historyConfiguration: Self.googleWorkspaceLoginHistoryConfiguration(bundle: bundle)
+        )
         let microsoftOAuthConfiguration = Self.microsoftOAuthConfiguration(bundle: bundle)
         let microsoftTokenStore = MicrosoftOAuthTokenStore(secureStore: secureStore)
         let microsoftOutlookService = MicrosoftOutlookOAuthService(
@@ -53,6 +70,7 @@ final class AppContainer {
         )
         let providerConnectionService = HybridProviderConnectionService(
             fallbackService: fallbackProviderConnectionService,
+            googleService: googleOAuthService,
             outlookService: microsoftOutlookService
         )
         let providerCatalogService = MockProviderCatalogService(coordinator: coordinator)
@@ -159,6 +177,57 @@ final class AppContainer {
             tenantID: tenantID.isEmpty ? "common" : tenantID,
             redirectURI: redirectURI,
             scopes: resolvedScopes
+        )
+    }
+
+    private static func googleOAuthConfiguration(bundle: Bundle) -> GoogleOAuthConfiguration? {
+        guard let rawClientID = bundle.object(forInfoDictionaryKey: "GOOGLE_OAUTH_CLIENT_ID") as? String else {
+            return nil
+        }
+        let clientID = rawClientID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clientID.isEmpty else {
+            return nil
+        }
+
+        let redirectURIString = (
+            bundle.object(forInfoDictionaryKey: "GOOGLE_OAUTH_REDIRECT_URI") as? String
+        )?.trimmingCharacters(in: .whitespacesAndNewlines)
+            ?? "secuperso://oauth"
+        guard let redirectURI = URL(string: redirectURIString) else {
+            return nil
+        }
+
+        let scopesString = (
+            bundle.object(forInfoDictionaryKey: "GOOGLE_OAUTH_SCOPES") as? String
+        )?.trimmingCharacters(in: .whitespacesAndNewlines)
+            ?? "openid profile email"
+        let scopes = scopesString
+            .split(whereSeparator: \.isWhitespace)
+            .map(String.init)
+        let resolvedScopes = scopes.isEmpty ? ["openid", "profile", "email"] : scopes
+
+        let clientSecretValue = (
+            bundle.object(forInfoDictionaryKey: "GOOGLE_OAUTH_CLIENT_SECRET") as? String
+        )?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let clientSecret = (clientSecretValue?.isEmpty == false) ? clientSecretValue : nil
+
+        return GoogleOAuthConfiguration(
+            clientID: clientID,
+            clientSecret: clientSecret,
+            redirectURI: redirectURI,
+            scopes: resolvedScopes
+        )
+    }
+
+    private static func googleWorkspaceLoginHistoryConfiguration(bundle: Bundle) -> GoogleWorkspaceLoginHistoryConfiguration {
+        let lookbackDays = bundle.object(forInfoDictionaryKey: "GOOGLE_WORKSPACE_LOGIN_LOOKBACK_DAYS") as? Int ?? 30
+        let maxResults = bundle.object(forInfoDictionaryKey: "GOOGLE_WORKSPACE_LOGIN_MAX_RESULTS") as? Int ?? 200
+        let maxPages = bundle.object(forInfoDictionaryKey: "GOOGLE_WORKSPACE_LOGIN_MAX_PAGES") as? Int ?? 5
+
+        return GoogleWorkspaceLoginHistoryConfiguration(
+            lookbackDays: lookbackDays,
+            maxResultsPerPage: maxResults,
+            maxPages: maxPages
         )
     }
 }

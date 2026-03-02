@@ -1,112 +1,94 @@
 import SwiftUI
 import SecuPersoDomain
-import SecuPersoUI
 
-struct SettingsScreen: View {
-    @ObservedObject var viewModel: SecurityConsoleViewModel
+public struct SettingsScreen: View {
+    let viewModel: SecurityConsoleViewModel
     @ObservedObject var exposureViewModel: ExposureViewModel
-    @State private var advancedExpanded = false
+    @State private var scenarioDraft: FixtureScenario = .moderate
+    @State private var exposureSourceAPIKeyDraft: String = ""
+    @State private var exposureSourceUserAgentDraft: String = "SecuPersoApp/1.0"
 
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: DesignTokens.spacingL) {
-                SectionContainer(title: "General") {
-                    Text("SecuPerso stores your monitoring data locally and keeps setup intentionally simple.")
-                        .font(.subheadline)
-                        .foregroundStyle(DesignTokens.mutedForeground)
-                }
-
-                SectionContainer {
-                    DisclosureGroup("Advanced", isExpanded: $advancedExpanded) {
-                        advancedContent
-                            .padding(.top, DesignTokens.spacingS)
-                    }
-                    .font(.headline)
-                }
-            }
-            .padding(DesignTokens.spacingL)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .background(DesignTokens.appBackground)
+    public init(viewModel: SecurityConsoleViewModel, exposureViewModel: ExposureViewModel) {
+        self.viewModel = viewModel
+        self.exposureViewModel = exposureViewModel
     }
 
-    @ViewBuilder
-    private var advancedContent: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
-            VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
-                Text("Exposure Data Source (HIBP v3)")
-                    .font(.headline)
+    public var body: some View {
+        Form {
+            Section("General") {
+                Text("SecuPerso stores your monitoring data locally and keeps setup intentionally simple.")
+                    .foregroundStyle(.secondary)
+            }
 
-                Text("API Key")
-                    .font(.caption)
-                    .foregroundStyle(DesignTokens.mutedForeground)
-                SecureField("API Key", text: $exposureViewModel.exposureSourceAPIKey)
+            Section("Exposure Data Source (HIBP v3)") {
+                SecureField("API Key", text: $exposureSourceAPIKeyDraft)
                     .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled(true)
+                    .accessibilityLabel("API Key")
 
-                Text("User-Agent")
-                    .font(.caption)
-                    .foregroundStyle(DesignTokens.mutedForeground)
-                TextField("User-Agent", text: $exposureViewModel.exposureSourceUserAgent)
+                TextField("User-Agent", text: $exposureSourceUserAgentDraft)
                     .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled(true)
+                    .accessibilityLabel("User-Agent")
 
                 HStack {
-                    Text(exposureViewModel.exposureSourceConfigured ? "Configured" : "Missing API key")
-                        .font(.caption)
-                        .foregroundStyle(exposureViewModel.exposureSourceConfigured ? .green : DesignTokens.mutedForeground)
+                    Text(exposureSourceConfigured ? "Configured" : "Missing API key")
+                        .foregroundStyle(exposureSourceConfigured ? .green : .secondary)
                     Spacer()
                     Button("Save") {
+                        exposureViewModel.exposureSourceAPIKey = exposureSourceAPIKeyDraft
+                        exposureViewModel.exposureSourceUserAgent = exposureSourceUserAgentDraft
                         exposureViewModel.saveExposureSourceConfiguration()
                     }
                 }
 
                 if let inlineStatusMessage = exposureViewModel.inlineStatusMessage {
                     Text(inlineStatusMessage)
-                        .font(.caption)
                         .foregroundStyle(.orange)
                 }
 
                 Text("Uses Have I Been Pwned API v3 for breach checks.")
-                    .font(.caption)
-                    .foregroundStyle(DesignTokens.mutedForeground)
+                    .foregroundStyle(.secondary)
             }
 
-            Divider()
-
-            VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
-                Text("Mock Login Scenario")
-                    .font(.headline)
-
-                Picker(
-                    "Scenario",
-                    selection: Binding(
-                        get: { viewModel.scenario },
-                        set: { newScenario in
-                            guard viewModel.scenario != newScenario else { return }
-                            viewModel.setScenario(newScenario)
-                        }
-                    )
-                ) {
+            Section("Mock Login Scenario") {
+                Picker("Scenario", selection: $scenarioDraft) {
                     ForEach(FixtureScenario.allCases, id: \.self) { scenario in
                         Text(scenario.title).tag(scenario)
                     }
                 }
-                .labelsHidden()
-                .frame(maxWidth: 220, alignment: .leading)
+                .accessibilityLabel("Scenario")
 
                 Text("Switches deterministic fixture sets used for demo sign-in and incident data.")
-                    .font(.caption)
-                    .foregroundStyle(DesignTokens.mutedForeground)
+                    .foregroundStyle(.secondary)
             }
 
-            Divider()
-
-            VStack(alignment: .leading, spacing: DesignTokens.spacingXS) {
-                Text("Data Security")
-                    .font(.headline)
+            Section("Data Security") {
                 Text("Local data is encrypted in SQLite. The encryption key is stored in Keychain entry com.secuperso.app.db-key.")
-                    .font(.caption)
-                    .foregroundStyle(DesignTokens.mutedForeground)
+                    .foregroundStyle(.secondary)
             }
         }
+        .formStyle(.grouped)
+        .padding(20)
+        .frame(minWidth: 620, minHeight: 420, alignment: .topLeading)
+        .onAppear {
+            syncDraftsFromViewModel()
+            scenarioDraft = viewModel.scenario
+        }
+        .onChange(of: scenarioDraft) { _, newScenario in
+            guard newScenario != viewModel.scenario else { return }
+            Task { @MainActor in
+                viewModel.setScenario(newScenario)
+            }
+        }
+    }
+
+    private var exposureSourceConfigured: Bool {
+        !exposureSourceAPIKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func syncDraftsFromViewModel() {
+        exposureSourceAPIKeyDraft = exposureViewModel.exposureSourceAPIKey
+        exposureSourceUserAgentDraft = exposureViewModel.exposureSourceUserAgent
     }
 }

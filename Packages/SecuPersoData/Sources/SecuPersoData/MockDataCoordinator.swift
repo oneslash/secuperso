@@ -24,13 +24,6 @@ public actor MockDataCoordinator {
         scenario
     }
 
-    public func refreshExposures() throws -> [ExposureRecord] {
-        let records = try fixtureLoader.loadExposures(for: scenario)
-        try database.replaceExposures(records)
-        try database.appendAuditEvent("Refreshed exposure fixtures for scenario: \(scenario.rawValue)")
-        return try database.fetchExposures()
-    }
-
     public func refreshLoginEvents() throws -> [LoginEvent] {
         let events = try fixtureLoader.loadLoginEvents(for: scenario)
         try database.replaceLoginEvents(events)

@@ -3,7 +3,13 @@ import UserNotifications
 import SecuPersoDomain
 
 actor LocalNotificationManager {
-    private var requestedAuthorization = false
+    private enum AuthorizationState {
+        case unknown
+        case granted
+        case denied
+    }
+
+    private var authorizationState: AuthorizationState = .unknown
 
     func notifyHighRisk(snapshot: RiskSnapshot) async {
         guard await requestAuthorizationIfNeeded() else {
@@ -25,15 +31,35 @@ actor LocalNotificationManager {
     }
 
     private func requestAuthorizationIfNeeded() async -> Bool {
-        if requestedAuthorization {
+        switch authorizationState {
+        case .granted:
             return true
+        case .denied:
+            return false
+        case .unknown:
+            break
         }
 
         do {
-            let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
-            requestedAuthorization = true
-            return granted
+            let center = UNUserNotificationCenter.current()
+            let settings = await center.notificationSettings()
+            switch settings.authorizationStatus {
+            case .authorized, .provisional, .ephemeral:
+                authorizationState = .granted
+                return true
+            case .denied:
+                authorizationState = .denied
+                return false
+            case .notDetermined:
+                let granted = try await center.requestAuthorization(options: [.alert, .sound])
+                authorizationState = granted ? .granted : .denied
+                return granted
+            @unknown default:
+                authorizationState = .denied
+                return false
+            }
         } catch {
+            authorizationState = .denied
             return false
         }
     }

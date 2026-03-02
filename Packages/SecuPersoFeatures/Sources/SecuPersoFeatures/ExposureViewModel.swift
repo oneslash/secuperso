@@ -4,8 +4,8 @@ import SecuPersoDomain
 @MainActor
 public final class ExposureViewModel: ObservableObject {
     @Published public private(set) var monitoredEmails: [MonitoredEmailAddress] = []
-    @Published public var exposureSourceAPIKey: String = ""
-    @Published public var exposureSourceUserAgent: String = "SecuPersoApp/1.0"
+    public var exposureSourceAPIKey: String = ""
+    public var exposureSourceUserAgent: String = "SecuPersoApp/1.0"
     @Published public private(set) var isWorking = false
     @Published public var inlineStatusMessage: String?
 
@@ -50,16 +50,6 @@ public final class ExposureViewModel: ObservableObject {
             monitoredEmails = try await monitoredEmailService.listMonitoredEmails()
         } catch {
             inlineStatusMessage = error.localizedDescription
-        }
-    }
-
-    public func reloadMonitoredEmails() {
-        Task {
-            do {
-                monitoredEmails = try await monitoredEmailService.listMonitoredEmails()
-            } catch {
-                inlineStatusMessage = error.localizedDescription
-            }
         }
     }
 

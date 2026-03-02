@@ -7,8 +7,7 @@ struct ActivityScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: DesignTokens.spacingL) {
-                connectedProvidersSection
+            LazyVStack(alignment: .leading, spacing: DesignTokens.spacingL) {
                 filterSection
                 feedSection
             }
@@ -16,104 +15,14 @@ struct ActivityScreen: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(DesignTokens.appBackground)
-        .animation(.easeInOut(duration: 0.18), value: viewModel.filteredActivityFeed.map(\.id))
-    }
-
-    private var connectedProvidersSection: some View {
-        SectionContainer(title: "Connected providers", subtitle: "Manage provider connections and review provider-level status.") {
-            if viewModel.accountCards.isEmpty {
-                Text("No providers configured yet.")
-                    .foregroundStyle(DesignTokens.mutedForeground)
-            } else {
-                VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
-                    ForEach(viewModel.accountCards) { account in
-                        providerCard(account)
-                    }
-                }
-            }
-        }
-    }
-
-    private func providerCard(_ account: AccountCardSummary) -> some View {
-        VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
-            HStack(spacing: DesignTokens.spacingS) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(account.providerName)
-                        .font(.headline)
-                    Text(account.details)
-                        .font(.caption)
-                        .foregroundStyle(DesignTokens.mutedForeground)
-                }
-
-                Spacer(minLength: 0)
-
-                StatusPill(connectionLabel(for: account.connectionState), tone: connectionTone(for: account.connectionState))
-                if account.needsAttention {
-                    StatusPill("Needs attention", tone: .caution)
-                }
-            }
-
-            if let latestLoginSummary = account.latestLoginSummary, let latestLoginAt = account.latestLoginAt {
-                Text("Last sign-in: \(latestLoginSummary) (\(latestLoginAt, style: .relative))")
-                    .font(.subheadline)
-            } else {
-                Text("No recent sign-ins for this provider.")
-                    .font(.subheadline)
-                    .foregroundStyle(DesignTokens.mutedForeground)
-            }
-
-            Text("Suspicious sign-ins: \(account.suspiciousLoginCount)")
-                .font(.caption)
-                .foregroundStyle(DesignTokens.mutedForeground)
-
-            if account.connectionState == .connected {
-                Button("Disconnect") {
-                    viewModel.disconnect(provider: account.providerID)
-                }
-                .buttonStyle(.bordered)
-            } else {
-                Button("Connect") {
-                    viewModel.beginConnectFlow(for: account.providerID)
-                }
-                .buttonStyle(.borderedProminent)
-            }
-        }
-        .padding(DesignTokens.spacingM)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius)
-                .fill(DesignTokens.secondaryCardBackground)
-        )
-    }
-
-    private func connectionLabel(for state: ConnectionState) -> String {
-        switch state {
-        case .connected:
-            return "Connected"
-        case .connecting:
-            return "Connecting"
-        case .error:
-            return "Error"
-        case .disconnected:
-            return "Disconnected"
-        }
-    }
-
-    private func connectionTone(for state: ConnectionState) -> StatusPillTone {
-        switch state {
-        case .connected:
-            return .positive
-        case .connecting:
-            return .caution
-        case .error:
-            return .critical
-        case .disconnected:
-            return .neutral
-        }
     }
 
     private var filterSection: some View {
-        SectionContainer(title: "Activity") {
+        SectionContainer(
+            title: "Activity timeline",
+            subtitle: "Filter events to focus on suspicious activity first.",
+            style: .inset
+        ) {
             Picker("Scope", selection: $viewModel.activityFilter) {
                 ForEach(ActivityFeedFilter.allCases) { filter in
                     Text(filter.title).tag(filter)
@@ -124,66 +33,110 @@ struct ActivityScreen: View {
     }
 
     private var feedSection: some View {
-        SectionContainer(title: "Recent events", subtitle: "Review suspicious sign-ins and open incidents.") {
+        SectionContainer(
+            title: "Recent events",
+            subtitle: "Focus on events marked Needs attention or At risk.",
+            style: .elevated
+        ) {
             if viewModel.filteredActivityFeed.isEmpty {
                 Text("No events in this view.")
                     .foregroundStyle(DesignTokens.mutedForeground)
             } else {
-                VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
-                    ForEach(viewModel.filteredActivityFeed) { item in
-                        feedRow(item)
+                VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
+                    if viewModel.isRefreshing {
+                        ProgressView("Refreshing events...")
+                            .controlSize(.small)
                     }
+
+                    Table(viewModel.filteredActivityFeed) {
+                        TableColumn("Event") { item in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(item.title)
+                                    .font(.subheadline.weight(.semibold))
+                                Text(item.detail)
+                                    .font(.caption)
+                                    .foregroundStyle(DesignTokens.mutedForeground)
+                                    .lineLimit(2)
+                            }
+                        }
+
+                        TableColumn("Category") { item in
+                            Text(kindLabel(for: item.kind))
+                                .font(.caption)
+                        }
+
+                        TableColumn("Status") { item in
+                            if item.needsAttention {
+                                StatusPill(attentionLabel(for: item), tone: attentionTone(for: item))
+                            } else {
+                                Text("Normal")
+                                    .font(.caption)
+                                    .foregroundStyle(DesignTokens.mutedForeground)
+                            }
+                        }
+
+                        TableColumn("When") { item in
+                            Text(DisplayDateFormatter.shortDateTime.string(from: item.date))
+                                .font(.caption)
+                                .foregroundStyle(DesignTokens.mutedForeground)
+                        }
+
+                        TableColumn("Actions") { item in
+                            HStack(spacing: DesignTokens.spacingXS) {
+                                ForEach(item.actions) { action in
+                                    Button(action.title) {
+                                        requestConfirmation(for: action)
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
+                                }
+                            }
+                        }
+                    }
+                    .frame(minHeight: 320)
+                    .padding(DesignTokens.spacingXS)
+                    .background(
+                        RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius, style: .continuous)
+                            .fill(DesignTokens.surfaceTertiary)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius, style: .continuous)
+                            .stroke(DesignTokens.borderSubtle, lineWidth: DesignTokens.borderWidth)
+                    )
                 }
             }
         }
     }
 
-    private func feedRow(_ item: ActivityFeedItem) -> some View {
-        VStack(alignment: .leading, spacing: DesignTokens.spacingXS) {
-            HStack(alignment: .top, spacing: DesignTokens.spacingS) {
-                Image(systemName: symbol(for: item.kind))
-                    .foregroundStyle(color(for: item.severity))
-                    .frame(width: 18)
-                    .padding(.top, 1)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.title)
-                        .font(.subheadline.weight(.semibold))
-                    Text(item.detail)
-                        .font(.caption)
-                        .foregroundStyle(DesignTokens.mutedForeground)
-                }
-
-                Spacer(minLength: 0)
-
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(item.date, style: .time)
-                        .font(.caption)
-                        .foregroundStyle(DesignTokens.mutedForeground)
-                    if item.needsAttention {
-                        StatusPill("Needs attention", tone: .caution)
-                    }
-                }
-            }
-
-            if !item.actions.isEmpty {
-                HStack(spacing: DesignTokens.spacingS) {
-                    ForEach(item.actions) { action in
-                        Button(action.title) {
-                            requestConfirmation(for: action)
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                }
-                .padding(.leading, 28)
-            }
+    private func kindLabel(for kind: ActivityFeedItem.Kind) -> String {
+        switch kind {
+        case .exposure:
+            return "Exposure"
+        case .login:
+            return "Sign-in"
+        case .incident:
+            return "Incident"
         }
-        .padding(DesignTokens.spacingS)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius)
-                .fill(DesignTokens.secondaryCardBackground)
-        )
+    }
+
+    private func attentionLabel(for item: ActivityFeedItem) -> String {
+        switch item.severity {
+        case .warning:
+            return "At risk"
+        case .caution, .neutral:
+            return "Needs attention"
+        }
+    }
+
+    private func attentionTone(for item: ActivityFeedItem) -> StatusPillTone {
+        switch item.severity {
+        case .warning:
+            return .critical
+        case .caution:
+            return .caution
+        case .neutral:
+            return .neutral
+        }
     }
 
     private func requestConfirmation(for action: ActivityFeedAction) {
@@ -203,28 +156,6 @@ struct ActivityScreen: View {
                 return
             }
             viewModel.requestResolveIncident(incident)
-        }
-    }
-
-    private func symbol(for kind: ActivityFeedItem.Kind) -> String {
-        switch kind {
-        case .exposure:
-            return "envelope.badge"
-        case .login:
-            return "person.badge.shield.checkmark"
-        case .incident:
-            return "exclamationmark.triangle"
-        }
-    }
-
-    private func color(for severity: ActivityFeedItem.Severity) -> Color {
-        switch severity {
-        case .neutral:
-            return .secondary
-        case .caution:
-            return .orange
-        case .warning:
-            return .red
         }
     }
 }

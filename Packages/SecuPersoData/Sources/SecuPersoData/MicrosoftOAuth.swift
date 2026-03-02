@@ -211,7 +211,9 @@ public final class MicrosoftOutlookOAuthService: @unchecked Sendable {
 
     public func beginConnection() async -> AsyncStream<ProviderConnectionUpdate> {
         AsyncStream { continuation in
-            Task {
+            let task = Task {
+                defer { continuation.finish() }
+
                 await emit(
                     state: .connecting,
                     message: "Opening Microsoft sign-in...",
@@ -224,7 +226,6 @@ public final class MicrosoftOutlookOAuthService: @unchecked Sendable {
                         message: "Microsoft OAuth is not configured. Set MS_ENTRA_CLIENT_ID in app settings.",
                         continuation: continuation
                     )
-                    continuation.finish()
                     return
                 }
 
@@ -248,6 +249,7 @@ public final class MicrosoftOutlookOAuthService: @unchecked Sendable {
                         startURL: authorizeURL,
                         callbackScheme: callbackScheme
                     )
+                    try Task.checkCancellation()
                     let code = try Self.authorizationCode(
                         callbackURL: callbackURL,
                         expectedState: stateToken
@@ -264,6 +266,7 @@ public final class MicrosoftOutlookOAuthService: @unchecked Sendable {
                         authorizationCode: code,
                         codeVerifier: challenge.codeVerifier
                     )
+                    try Task.checkCancellation()
                     try tokenStore.save(token)
 
                     await emit(
@@ -271,6 +274,8 @@ public final class MicrosoftOutlookOAuthService: @unchecked Sendable {
                         message: "Microsoft account connected.",
                         continuation: continuation
                     )
+                } catch is CancellationError {
+                    return
                 } catch OAuthAuthorizationSessionError.cancelled {
                     await emit(
                         state: .disconnected,
@@ -290,8 +295,10 @@ public final class MicrosoftOutlookOAuthService: @unchecked Sendable {
                         continuation: continuation
                     )
                 }
+            }
 
-                continuation.finish()
+            continuation.onTermination = { @Sendable _ in
+                task.cancel()
             }
         }
     }

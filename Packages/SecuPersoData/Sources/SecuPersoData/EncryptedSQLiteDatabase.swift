@@ -86,12 +86,6 @@ public final class EncryptedSQLiteDatabase: @unchecked Sendable {
         }
     }
 
-    public func deleteExposures(forEmailFingerprint scopeFingerprint: String) throws {
-        try queue.sync {
-            try deleteExposuresLocked(forEmailFingerprint: scopeFingerprint)
-        }
-    }
-
     public func fetchExposures() throws -> [ExposureRecord] {
         try queue.sync {
             let rows = try fetchPayloadRows(table: "exposures")
@@ -116,29 +110,6 @@ public final class EncryptedSQLiteDatabase: @unchecked Sendable {
                    message.localizedCaseInsensitiveContains("UNIQUE constraint failed: monitored_emails.email_fingerprint") {
                     throw SecuPersoDataError.duplicateMonitoredEmail
                 }
-                throw error
-            }
-        }
-    }
-
-    public func replaceMonitoredEmails(_ monitoredEmails: [MonitoredEmailAddress]) throws {
-        try queue.sync {
-            try execute(sql: "BEGIN TRANSACTION")
-            do {
-                try execute(sql: "DELETE FROM monitored_emails")
-                for monitoredEmail in monitoredEmails {
-                    let payload = try encrypt(monitoredEmail)
-                    let fingerprint = emailFingerprint(for: monitoredEmail.email)
-                    try insertMonitoredEmailPayload(
-                        id: monitoredEmail.id.uuidString,
-                        emailFingerprint: fingerprint,
-                        updatedAt: monitoredEmail.lastCheckedAt ?? monitoredEmail.createdAt,
-                        payload: payload
-                    )
-                }
-                try execute(sql: "COMMIT")
-            } catch {
-                try? execute(sql: "ROLLBACK")
                 throw error
             }
         }

@@ -12,18 +12,29 @@ public struct MetricCardView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.spacingXS) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.caption)
+                .foregroundStyle(DesignTokens.textSecondary)
             Text(value)
                 .font(.title2.weight(.semibold))
+                .foregroundStyle(DesignTokens.textPrimary)
             Text(subtitle)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.caption)
+                .foregroundStyle(DesignTokens.textSecondary)
+                .lineLimit(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(DesignTokens.spacingM)
-        .background(RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius).fill(DesignTokens.elevatedCardBackground))
+        .frame(minHeight: 108, alignment: .topLeading)
+        .padding(.horizontal, DesignTokens.spacingM)
+        .padding(.vertical, DesignTokens.spacingS)
+        .background(
+            RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius, style: .continuous)
+                .fill(DesignTokens.surfaceSecondary)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius, style: .continuous)
+                .stroke(DesignTokens.borderSubtle, lineWidth: DesignTokens.borderWidth)
+        )
     }
 }

@@ -45,7 +45,4 @@ public final class EncryptionKeyProvider: @unchecked Sendable {
         try SymmetricKey(data: loadOrCreateKeyData())
     }
 
-    public func loadExistingKey() throws -> SymmetricKey {
-        try SymmetricKey(data: loadExistingKeyData())
-    }
 }

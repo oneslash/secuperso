@@ -1,5 +1,7 @@
+/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/DisplayDateFormatter.swift
 /Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/EmailExposureScreen.swift
 /Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/ExposureViewModel.swift
+/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/IntegrationsScreen.swift
 /Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/LoginActivityScreen.swift
 /Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/MockOAuthSheet.swift
 /Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/OverviewScreen.swift
@@ -7,3 +9,4 @@
 /Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/SecurityConsoleView.swift
 /Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/SecurityConsoleViewModel.swift
 /Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/SettingsScreen.swift
+/Users/sardo/Projects/secuperso/Packages/SecuPersoFeatures/Sources/SecuPersoFeatures/SharedRows.swift

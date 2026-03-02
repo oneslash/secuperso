@@ -177,6 +177,54 @@ final class HaveIBeenPwnedExposureMonitoringServiceTests: XCTestCase {
         XCTAssertEqual(try database.fetchExposures().count, 0)
     }
 
+    func testDisablingMonitoredEmailClearsExistingFindings() async throws {
+        let (preferences, suiteName) = makePreferences()
+        defer { preferences.removePersistentDomain(forName: suiteName) }
+
+        let database = try makeDatabase()
+        let service = HaveIBeenPwnedExposureMonitoringService(
+            secureStore: TestSecureStore(),
+            preferences: preferences,
+            database: database,
+            dataLoader: { request in
+                let payload = """
+                [
+                  {
+                    "Name": "Adobe",
+                    "Title": "Adobe",
+                    "BreachDate": "2013-10-04",
+                    "AddedDate": "2025-11-03T12:30:00Z",
+                    "PwnCount": 152445165,
+                    "DataClasses": ["Email addresses", "Passwords"],
+                    "IsSensitive": false,
+                    "IsSpamList": false
+                  }
+                ]
+                """
+                let response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!
+                return (Data(payload.utf8), response)
+            }
+        )
+
+        try await service.saveConfiguration(
+            ExposureSourceConfiguration(apiKey: "test-api-key", userAgent: "SecuPersoTests/1.0")
+        )
+        let monitored = try await service.addMonitoredEmail("owner@example.com", providerHint: .other)
+
+        _ = try await service.refresh()
+        XCTAssertEqual(try database.fetchExposures().count, 1)
+
+        try await service.setMonitoredEmailEnabled(id: monitored.id, isEnabled: false)
+
+        XCTAssertEqual(try database.fetchExposures().count, 0)
+        XCTAssertEqual(try database.fetchMonitoredEmail(id: monitored.id)?.isEnabled, false)
+    }
+
     func testBatchStopsAfterRateLimit() async throws {
         let recorder = RequestRecorder()
         let (preferences, suiteName) = makePreferences()

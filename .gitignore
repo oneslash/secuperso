@@ -1,16 +1,46 @@
-# macOS
+# macOS filesystem metadata
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
 
-# Xcode user and local build state
-DerivedData/
-*.xcworkspace/xcuserdata/
-*.xcodeproj/xcuserdata/
+# Xcode local user state
+xcuserdata/
 *.xcuserdatad/
 *.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
 
-# Swift Package Manager
-.build/
-.swiftpm/
-
-# Test artifacts
+# Xcode and Swift build outputs
+DerivedData/
+build/
 *.xcresult
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+.swiftpm/
+.build/
+**/.swiftpm/
+**/.build/
+
+# Swift Package Manager local resolution files
+Package.resolved
+**/Package.resolved
+
+# Editor/tooling metadata
+.vscode/
+.idea/
+
+# Temp files and logs
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Local environment overrides
+.env
+.env.*
+*.local

@@ -4,19 +4,23 @@ import SecuPersoDomain
 
 @MainActor
 public final class SecurityConsoleViewModel: ObservableObject {
-    @Published public private(set) var exposures: [ExposureRecord] = []
-    @Published public private(set) var loginEvents: [LoginEvent] = []
-    @Published public private(set) var incidents: [IncidentCase] = []
-    @Published public private(set) var providers: [ProviderDescriptor] = []
-    @Published public private(set) var providerStates: [ProviderID: ConnectionState] = [:]
+    public private(set) var exposures: [ExposureRecord] = []
+    public private(set) var loginEvents: [LoginEvent] = []
+    public private(set) var incidents: [IncidentCase] = []
+    public private(set) var providers: [ProviderDescriptor] = []
+    public private(set) var providerStates: [ProviderID: ConnectionState] = [:]
 
-    @Published public private(set) var riskSnapshot = RiskSnapshot(score: 0, level: .low, lastUpdatedAt: Date())
-    @Published public private(set) var timelineEvents: [TimelineEvent] = []
+    public private(set) var riskSnapshot = RiskSnapshot(score: 0, level: .low, lastUpdatedAt: Date())
+    public private(set) var timelineEvents: [TimelineEvent] = []
     @Published public private(set) var overviewSummary = SecurityConsoleViewModel.defaultOverviewSummary()
     @Published public private(set) var nextAction = SecurityConsoleViewModel.defaultNextAction()
     @Published public private(set) var accountCards: [AccountCardSummary] = []
     @Published public private(set) var exposureSummary = SecurityConsoleViewModel.defaultExposureSummary()
+    @Published public private(set) var openExposureFindings: [ExposureFindingsGroup] = []
+    @Published public private(set) var exposureFindingRows: [ExposureFindingsProjectionRow] = []
+    @Published public private(set) var overviewSignals = SecurityConsoleViewModel.defaultOverviewSignalsProjection()
     @Published public private(set) var activityFeed: [ActivityFeedItem] = []
+    @Published public private(set) var activityPreview: [ActivityPreviewProjection] = []
     @Published public private(set) var pendingConfirmationAction: PendingConfirmationAction?
 
     @Published public var activityFilter: ActivityFeedFilter = .needsAttention
@@ -41,6 +45,8 @@ public final class SecurityConsoleViewModel: ObservableObject {
     private let riskEngine: RiskScoringEngine
     private let highRiskNotifier: (@Sendable (RiskSnapshot) async -> Void)?
     private let onRiskRecomputed: ((RiskSnapshot) -> Void)?
+    private let onViewProjectionsRebuilt: (() -> Void)?
+    private let onTimelineRebuilt: (() -> Void)?
 
     private var streamTasks: [Task<Void, Never>] = []
     private var refreshLoopTask: Task<Void, Never>?
@@ -51,6 +57,12 @@ public final class SecurityConsoleViewModel: ObservableObject {
     private var riskRecomputeSuppressionDepth = 0
     private var pendingRiskRecompute = false
     private var riskFlushScheduled = false
+
+    private var projectionRecomputeSuppressionDepth = 0
+    private var pendingProjectionRebuild = false
+    private var pendingTimelineRebuild = false
+
+    private let overviewPreviewLimit = 3
 
     public var errorMessage: String? {
         get { presentedError?.message }
@@ -72,6 +84,10 @@ public final class SecurityConsoleViewModel: ObservableObject {
         }
     }
 
+    public var overviewActivityPreviewItems: [ActivityFeedItem] {
+        activityPreview.map(\.item)
+    }
+
     public init(
         exposureService: any ExposureMonitoringService,
         loginActivityService: any LoginActivityService,
@@ -86,7 +102,9 @@ public final class SecurityConsoleViewModel: ObservableObject {
         initialScenario: FixtureScenario = .moderate,
         riskEngine: RiskScoringEngine = RiskScoringEngine(),
         highRiskNotifier: (@Sendable (RiskSnapshot) async -> Void)? = nil,
-        onRiskRecomputed: ((RiskSnapshot) -> Void)? = nil
+        onRiskRecomputed: ((RiskSnapshot) -> Void)? = nil,
+        onViewProjectionsRebuilt: (() -> Void)? = nil,
+        onTimelineRebuilt: (() -> Void)? = nil
     ) {
         self.exposureService = exposureService
         self.loginActivityService = loginActivityService
@@ -102,6 +120,8 @@ public final class SecurityConsoleViewModel: ObservableObject {
         self.riskEngine = riskEngine
         self.highRiskNotifier = highRiskNotifier
         self.onRiskRecomputed = onRiskRecomputed
+        self.onViewProjectionsRebuilt = onViewProjectionsRebuilt
+        self.onTimelineRebuilt = onTimelineRebuilt
     }
 
     deinit {
@@ -133,10 +153,12 @@ public final class SecurityConsoleViewModel: ObservableObject {
 
     public func refreshAll() async {
         isRefreshing = true
+        beginProjectionRecomputeSuppression()
         beginRiskRecomputeSuppression()
         defer {
-            isRefreshing = false
             endRiskRecomputeSuppression()
+            endProjectionRecomputeSuppression()
+            isRefreshing = false
         }
 
         do {
@@ -157,7 +179,6 @@ public final class SecurityConsoleViewModel: ObservableObject {
             }
 
             lastRefreshAt = Date()
-            flushPendingRiskRecomputeIfNeeded()
         } catch {
             present(error: error, context: .refreshAll)
         }
@@ -194,7 +215,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
                     self.oauthState = update.state
                     self.oauthStatusMessage = update.message
                     self.providerStates[provider] = update.state
-                    self.rebuildViewProjections()
+                    self.requestViewProjectionRebuild()
                 }
             }
 
@@ -203,12 +224,18 @@ public final class SecurityConsoleViewModel: ObservableObject {
     }
 
     public func dismissOAuthSheet() {
+        guard oauthSheetProvider != nil || oauthState != .disconnected || oauthStatusMessage != "Provider disconnected." else {
+            return
+        }
         oauthSheetProvider = nil
         oauthState = .disconnected
         oauthStatusMessage = "Provider disconnected."
     }
 
     public func dismissError() {
+        guard presentedError != nil else {
+            return
+        }
         presentedError = nil
     }
 
@@ -217,7 +244,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
             do {
                 try await providerConnectionService.disconnect(provider)
                 providerStates[provider] = .disconnected
-                rebuildViewProjections()
+                requestViewProjectionRebuild()
                 await reloadConnections()
             } catch {
                 present(error: error, context: .disconnectProvider)
@@ -300,6 +327,9 @@ public final class SecurityConsoleViewModel: ObservableObject {
     }
 
     public func cancelPendingAction() {
+        guard pendingConfirmationAction != nil else {
+            return
+        }
         pendingConfirmationAction = nil
     }
 
@@ -311,7 +341,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
             activityFilter = .needsAttention
             return .activity
         case .connectProvider:
-            return .activity
+            return .integrations
         case .runSecurityCheck:
             Task {
                 await refreshAll()
@@ -388,9 +418,11 @@ public final class SecurityConsoleViewModel: ObservableObject {
     }
 
     private func loadStaticData() async {
+        beginProjectionRecomputeSuppression()
         beginRiskRecomputeSuppression()
         defer {
             endRiskRecomputeSuppression()
+            endProjectionRecomputeSuppression()
         }
 
         do {
@@ -412,7 +444,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
                 applyIncidents(try await incidentReadableService.list())
             }
 
-            rebuildViewProjections()
+            requestViewProjectionRebuild()
         } catch {
             present(error: error, context: .loadStaticData)
         }
@@ -430,7 +462,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
 
     private func applyProviderStates(_ connections: [ProviderConnection]) {
         providerStates = Dictionary(uniqueKeysWithValues: connections.map { ($0.id, $0.state) })
-        rebuildViewProjections()
+        requestViewProjectionRebuild()
     }
 
     private func replaceLoginEvent(_ loginEvent: LoginEvent) {
@@ -443,28 +475,74 @@ public final class SecurityConsoleViewModel: ObservableObject {
 
     private func applyExposures(_ values: [ExposureRecord]) {
         exposures = values
-        rebuildTimelineEvents()
-        rebuildViewProjections()
+        requestTimelineRebuild()
+        requestViewProjectionRebuild()
         requestRiskRecompute()
     }
 
     private func applyLoginEvents(_ values: [LoginEvent]) {
         loginEvents = values
-        rebuildTimelineEvents()
-        rebuildViewProjections()
+        requestTimelineRebuild()
+        requestViewProjectionRebuild()
         requestRiskRecompute()
     }
 
     private func applyIncidents(_ values: [IncidentCase]) {
         incidents = values
-        rebuildTimelineEvents()
-        rebuildViewProjections()
+        requestTimelineRebuild()
+        requestViewProjectionRebuild()
         requestRiskRecompute()
+    }
+
+    private func beginProjectionRecomputeSuppression() {
+        projectionRecomputeSuppressionDepth += 1
+    }
+
+    private func endProjectionRecomputeSuppression() {
+        projectionRecomputeSuppressionDepth = max(0, projectionRecomputeSuppressionDepth - 1)
+        if projectionRecomputeSuppressionDepth == 0 {
+            flushPendingProjectionRebuildsIfNeeded()
+        }
+    }
+
+    private func requestViewProjectionRebuild() {
+        pendingProjectionRebuild = true
+        guard projectionRecomputeSuppressionDepth == 0 else {
+            return
+        }
+
+        flushPendingProjectionRebuildsIfNeeded()
+    }
+
+    private func requestTimelineRebuild() {
+        pendingTimelineRebuild = true
+        guard projectionRecomputeSuppressionDepth == 0 else {
+            return
+        }
+
+        flushPendingProjectionRebuildsIfNeeded()
+    }
+
+    private func flushPendingProjectionRebuildsIfNeeded() {
+        guard projectionRecomputeSuppressionDepth == 0 else {
+            return
+        }
+
+        if pendingTimelineRebuild {
+            pendingTimelineRebuild = false
+            rebuildTimelineEvents()
+        }
+
+        if pendingProjectionRebuild {
+            pendingProjectionRebuild = false
+            rebuildViewProjections()
+        }
     }
 
     private func rebuildTimelineEvents() {
         let exposureEvents = exposures.map {
             TimelineEvent(
+                id: "exposure-\($0.id.uuidString)",
                 kind: .exposure,
                 title: "\($0.severity.rawValue.capitalized) exposure",
                 details: "\($0.email) from \($0.source)",
@@ -474,6 +552,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
 
         let loginTimeline = loginEvents.map {
             TimelineEvent(
+                id: "login-\($0.id.uuidString)",
                 kind: .login,
                 title: "\($0.provider.displayName) sign-in",
                 details: "\($0.location) · \($0.device)",
@@ -483,6 +562,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
 
         let incidentTimeline = incidents.map {
             TimelineEvent(
+                id: "incident-\($0.id.uuidString)",
                 kind: .incident,
                 title: $0.title,
                 details: "Status: \($0.status.rawValue)",
@@ -494,6 +574,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
             .sorted(by: { $0.date > $1.date })
             .prefix(12)
             .map { $0 }
+        onTimelineRebuilt?()
     }
 
     private func beginRiskRecomputeSuppression() {
@@ -541,7 +622,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
     private func recomputeRisk() {
         let oldLevel = riskSnapshot.level
         riskSnapshot = riskEngine.score(exposures: exposures, logins: loginEvents, incidents: incidents, now: Date())
-        rebuildViewProjections()
+        requestViewProjectionRebuild()
         onRiskRecomputed?(riskSnapshot)
 
         if oldLevel != .high, riskSnapshot.level == .high {
@@ -552,32 +633,66 @@ public final class SecurityConsoleViewModel: ObservableObject {
     }
 
     private func rebuildViewProjections() {
-        overviewSummary = buildOverviewSummary()
-        exposureSummary = buildExposureSummary()
-        accountCards = buildAccountCards()
-        activityFeed = buildActivityFeed()
-        nextAction = buildNextAction()
+        let projectedAccountCards = buildAccountCards()
+        let projectedExposureSummary = buildExposureSummary()
+        let projectedOpenExposureFindings = buildOpenExposureFindings()
+        let projectedExposureFindingRows = buildExposureFindingRows(from: projectedOpenExposureFindings)
+        let projectedActivityFeed = buildActivityFeed()
+        let projectedOverviewSignals = buildOverviewSignalsProjection(accountCards: projectedAccountCards)
+        let projectedOverviewSummary = buildOverviewSummary(signals: projectedOverviewSignals)
+        let projectedActivityPreview = buildActivityPreview(from: projectedActivityFeed)
+        let projectedNextAction = buildNextAction()
+
+        accountCards = projectedAccountCards
+        exposureSummary = projectedExposureSummary
+        openExposureFindings = projectedOpenExposureFindings
+        exposureFindingRows = projectedExposureFindingRows
+        activityFeed = projectedActivityFeed
+        overviewSignals = projectedOverviewSignals
+        overviewSummary = projectedOverviewSummary
+        activityPreview = projectedActivityPreview
+        nextAction = projectedNextAction
+        onViewProjectionsRebuilt?()
     }
 
-    private func buildOverviewSummary() -> OverviewSummary {
+    private func buildOverviewSummary(signals: OverviewSignalsProjection) -> OverviewSummary {
+        let stateLabel: String
         let headline: String
         switch riskSnapshot.level {
         case .low:
-            headline = "Looks good"
+            stateLabel = "Stable"
+            headline = "No critical risks detected"
         case .medium:
-            headline = "A few items need review"
+            stateLabel = "Needs attention"
+            headline = "Review pending security signals"
         case .high:
-            headline = "High risk right now"
+            stateLabel = "At risk"
+            headline = "Immediate review required"
         }
 
-        let detail = "\(newExposureCount) open exposure alerts · \(suspiciousLoginsCount) suspicious sign-ins · \(unresolvedIncidentCount) open incidents"
+        let detail = "\(newExposureCount) open exposure alerts · \(signals.suspiciousSignInCount) suspicious sign-ins · \(signals.openIncidentCount) open incidents"
 
         return OverviewSummary(
             riskScore: riskSnapshot.score,
             riskLevel: riskSnapshot.level,
+            stateLabel: stateLabel,
             headline: headline,
             detail: detail,
             lastUpdatedAt: riskSnapshot.lastUpdatedAt
+        )
+    }
+
+    private func buildOverviewSignalsProjection(accountCards: [AccountCardSummary]) -> OverviewSignalsProjection {
+        let suspiciousSignInCount = loginEvents.filter { $0.suspicious || !$0.expected }.count
+        let openIncidentCount = incidents.filter { $0.status == .open }.count
+        let connectedProviderCount = accountCards.filter { $0.connectionState == .connected }.count
+        let totalProviderCount = max(accountCards.count, 1)
+
+        return OverviewSignalsProjection(
+            suspiciousSignInCount: suspiciousSignInCount,
+            openIncidentCount: openIncidentCount,
+            connectedProviderCount: connectedProviderCount,
+            totalProviderCount: totalProviderCount
         )
     }
 
@@ -608,6 +723,29 @@ public final class SecurityConsoleViewModel: ObservableObject {
             headline: headline,
             detail: detail
         )
+    }
+
+    private func buildOpenExposureFindings() -> [ExposureFindingsGroup] {
+        let grouped = Dictionary(grouping: exposures.filter { $0.status == .open }, by: \.email)
+        return grouped.keys.sorted().map { email in
+            let findings = (grouped[email] ?? []).sorted(by: { $0.foundAt > $1.foundAt })
+            return ExposureFindingsGroup(email: email, findings: findings)
+        }
+    }
+
+    private func buildExposureFindingRows(from groups: [ExposureFindingsGroup]) -> [ExposureFindingsProjectionRow] {
+        groups.flatMap { group in
+            group.findings.map { finding in
+                ExposureFindingsProjectionRow(
+                    id: finding.id,
+                    email: group.email,
+                    source: finding.source,
+                    foundAt: finding.foundAt,
+                    severity: finding.severity,
+                    remediation: finding.remediation
+                )
+            }
+        }
     }
 
     private func buildAccountCards() -> [AccountCardSummary] {
@@ -730,6 +868,18 @@ public final class SecurityConsoleViewModel: ObservableObject {
             .sorted(by: { $0.date > $1.date })
     }
 
+    private func buildActivityPreview(from items: [ActivityFeedItem]) -> [ActivityPreviewProjection] {
+        items
+            .sorted { lhs, rhs in
+                if lhs.needsAttention != rhs.needsAttention {
+                    return lhs.needsAttention && !rhs.needsAttention
+                }
+                return lhs.date > rhs.date
+            }
+            .prefix(overviewPreviewLimit)
+            .map { ActivityPreviewProjection(item: $0) }
+    }
+
     private func buildNextAction() -> NextAction {
         if let exposure = exposures
             .filter({ $0.status == .open && ($0.severity == .critical || $0.severity == .high) })
@@ -739,7 +889,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
                 kind: .reviewHighRiskExposure(exposureID: exposure.id),
                 title: "Review high-priority exposure",
                 detail: "\(exposure.email) appears in \(exposure.source).",
-                buttonTitle: "Review in Exposure",
+                buttonTitle: "Review exposure",
                 destinationSection: .exposure
             )
         }
@@ -752,7 +902,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
                 kind: .reviewSuspiciousLogin(loginID: login.id),
                 title: "Review suspicious sign-in",
                 detail: "\(login.provider.displayName) sign-in from \(login.location).",
-                buttonTitle: "Review Activity",
+                buttonTitle: "Review sign-in",
                 destinationSection: .activity
             )
         }
@@ -765,7 +915,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
                 kind: .reviewIncident(incidentID: incident.id),
                 title: "Resolve open incident",
                 detail: incident.title,
-                buttonTitle: "Open Activity",
+                buttonTitle: "Resolve incident",
                 destinationSection: .activity
             )
         }
@@ -781,8 +931,8 @@ public final class SecurityConsoleViewModel: ObservableObject {
                 kind: .connectProvider(providerID: disconnectedProvider.id),
                 title: "Connect another account",
                 detail: "Add \(disconnectedProvider.displayName) to improve monitoring coverage.",
-                buttonTitle: "Open Activity",
-                destinationSection: .activity
+                buttonTitle: "Connect provider",
+                destinationSection: .integrations
             )
         }
 
@@ -802,7 +952,8 @@ public final class SecurityConsoleViewModel: ObservableObject {
         OverviewSummary(
             riskScore: 0,
             riskLevel: .low,
-            headline: "Looks good",
+            stateLabel: "Stable",
+            headline: "No critical risks detected",
             detail: "No activity has been loaded yet.",
             lastUpdatedAt: Date()
         )
@@ -813,7 +964,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
             kind: .runSecurityCheck,
             title: "Run a quick security check",
             detail: "Refresh to pull the latest account activity.",
-            buttonTitle: "Run security check",
+            buttonTitle: "Run check",
             destinationSection: .overview
         )
     }
@@ -826,6 +977,15 @@ public final class SecurityConsoleViewModel: ObservableObject {
             mostRecentAt: nil,
             headline: "No open exposure alerts",
             detail: "Your monitored emails currently have no open exposure findings."
+        )
+    }
+
+    private static func defaultOverviewSignalsProjection() -> OverviewSignalsProjection {
+        OverviewSignalsProjection(
+            suspiciousSignInCount: 0,
+            openIncidentCount: 0,
+            connectedProviderCount: 0,
+            totalProviderCount: 1
         )
     }
 }

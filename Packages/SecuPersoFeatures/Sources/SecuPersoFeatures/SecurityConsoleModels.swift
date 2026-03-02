@@ -3,12 +3,13 @@ import SecuPersoDomain
 
 public enum AppSection: String, CaseIterable, Identifiable, Sendable {
     case overview
-    case exposure
     case activity
+    case exposure
+    case integrations
     case settings
 
-    public static let primaryCases: [AppSection] = [.overview, .exposure, .activity]
-    public static let utilityCases: [AppSection] = [.settings]
+    public static let primaryCases: [AppSection] = [.overview, .activity, .exposure, .integrations, .settings]
+    public static let utilityCases: [AppSection] = []
 
     public var id: String { rawValue }
 
@@ -16,10 +17,12 @@ public enum AppSection: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .overview:
             return "Overview"
-        case .exposure:
-            return "Exposure"
         case .activity:
             return "Activity"
+        case .exposure:
+            return "Exposure"
+        case .integrations:
+            return "Integrations"
         case .settings:
             return "Settings"
         }
@@ -29,10 +32,12 @@ public enum AppSection: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .overview:
             return "shield.lefthalf.filled"
-        case .exposure:
-            return "envelope.badge.shield.half.filled"
         case .activity:
             return "clock.arrow.trianglehead.counterclockwise.rotate.90"
+        case .exposure:
+            return "envelope.badge.shield.half.filled"
+        case .integrations:
+            return "link.badge.plus"
         case .settings:
             return "gearshape"
         }
@@ -58,6 +63,7 @@ public enum ActivityFeedFilter: String, CaseIterable, Identifiable, Sendable {
 public struct OverviewSummary: Equatable, Sendable {
     public let riskScore: Int
     public let riskLevel: RiskLevel
+    public let stateLabel: String
     public let headline: String
     public let detail: String
     public let lastUpdatedAt: Date
@@ -65,12 +71,14 @@ public struct OverviewSummary: Equatable, Sendable {
     public init(
         riskScore: Int,
         riskLevel: RiskLevel,
+        stateLabel: String,
         headline: String,
         detail: String,
         lastUpdatedAt: Date
     ) {
         self.riskScore = riskScore
         self.riskLevel = riskLevel
+        self.stateLabel = stateLabel
         self.headline = headline
         self.detail = detail
         self.lastUpdatedAt = lastUpdatedAt
@@ -158,6 +166,61 @@ public struct ExposureSummary: Equatable, Sendable {
     }
 }
 
+public struct ExposureFindingsGroup: Identifiable, Equatable, Sendable {
+    public var id: String { email }
+    public let email: String
+    public let findings: [ExposureRecord]
+
+    public init(email: String, findings: [ExposureRecord]) {
+        self.email = email
+        self.findings = findings
+    }
+}
+
+public struct OverviewSignalsProjection: Equatable, Sendable {
+    public let suspiciousSignInCount: Int
+    public let openIncidentCount: Int
+    public let connectedProviderCount: Int
+    public let totalProviderCount: Int
+
+    public init(
+        suspiciousSignInCount: Int,
+        openIncidentCount: Int,
+        connectedProviderCount: Int,
+        totalProviderCount: Int
+    ) {
+        self.suspiciousSignInCount = suspiciousSignInCount
+        self.openIncidentCount = openIncidentCount
+        self.connectedProviderCount = connectedProviderCount
+        self.totalProviderCount = totalProviderCount
+    }
+}
+
+public struct ExposureFindingsProjectionRow: Identifiable, Equatable, Sendable {
+    public let id: UUID
+    public let email: String
+    public let source: String
+    public let foundAt: Date
+    public let severity: ExposureSeverity
+    public let remediation: String
+
+    public init(
+        id: UUID,
+        email: String,
+        source: String,
+        foundAt: Date,
+        severity: ExposureSeverity,
+        remediation: String
+    ) {
+        self.id = id
+        self.email = email
+        self.source = source
+        self.foundAt = foundAt
+        self.severity = severity
+        self.remediation = remediation
+    }
+}
+
 public struct ActivityFeedItem: Identifiable, Equatable, Sendable {
     public enum Kind: String, Sendable {
         case exposure
@@ -198,6 +261,15 @@ public struct ActivityFeedItem: Identifiable, Equatable, Sendable {
         self.severity = severity
         self.needsAttention = needsAttention
         self.actions = actions
+    }
+}
+
+public struct ActivityPreviewProjection: Identifiable, Equatable, Sendable {
+    public var id: String { item.id }
+    public let item: ActivityFeedItem
+
+    public init(item: ActivityFeedItem) {
+        self.item = item
     }
 }
 
@@ -263,11 +335,19 @@ public struct TimelineEvent: Identifiable, Hashable {
         case incident
     }
 
-    public var id: String { "\(kind.rawValue)-\(title)-\(date.timeIntervalSince1970)" }
+    public let id: String
     public let kind: Kind
     public let title: String
     public let details: String
     public let date: Date
+
+    public init(id: String, kind: Kind, title: String, details: String, date: Date) {
+        self.id = id
+        self.kind = kind
+        self.title = title
+        self.details = details
+        self.date = date
+    }
 }
 
 public struct SecurityConsoleError: Identifiable, Equatable, Sendable {

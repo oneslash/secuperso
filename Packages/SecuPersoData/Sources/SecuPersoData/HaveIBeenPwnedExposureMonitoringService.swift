@@ -133,6 +133,13 @@ public final class HaveIBeenPwnedExposureMonitoringService: ExposureMonitoringSe
 
         existing.isEnabled = isEnabled
         try database.upsertMonitoredEmail(existing)
+
+        if !isEnabled {
+            let scopeFingerprint = database.emailFingerprint(for: existing.email)
+            try database.replaceExposures(forEmailFingerprint: scopeFingerprint, findingRecords: [])
+            streamStore.publish(try database.fetchExposures())
+        }
+
         try database.appendAuditEvent("Updated monitored email \(existing.email) enabled=\(isEnabled)")
     }
 

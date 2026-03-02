@@ -137,10 +137,6 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift"
-        },
-        {
-          "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/SectionContainer.swift"
         },
         {
@@ -166,7 +162,6 @@
       "objects" : [
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/arm64-apple-macosx/debug/SecuPersoUI.build/DesignTokens.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/arm64-apple-macosx/debug/SecuPersoUI.build/MetricCardView.swift.o",
-        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/arm64-apple-macosx/debug/SecuPersoUI.build/RiskBadgeView.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/arm64-apple-macosx/debug/SecuPersoUI.build/SectionContainer.swift.o",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/arm64-apple-macosx/debug/SecuPersoUI.build/StatusPill.swift.o"
       ],
@@ -225,10 +220,6 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/arm64-apple-macosx/debug/SecuPersoUI.build/RiskBadgeView.swift.o"
-        },
-        {
-          "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/.build/arm64-apple-macosx/debug/SecuPersoUI.build/SectionContainer.swift.o"
         },
         {
@@ -244,7 +235,6 @@
       "sources" : [
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/DesignTokens.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/MetricCardView.swift",
-        "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/SectionContainer.swift",
         "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/StatusPill.swift"
       ],
@@ -321,7 +311,6 @@
       "-c",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/DesignTokens.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/MetricCardView.swift",
-      "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/SectionContainer.swift",
       "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/StatusPill.swift",
       "-I",
@@ -427,10 +416,6 @@
         {
           "kind" : "file",
           "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/MetricCardView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/sardo/Projects/secuperso/Packages/SecuPersoUI/Sources/SecuPersoUI/RiskBadgeView.swift"
         },
         {
           "kind" : "file",

@@ -1,25 +1,6 @@
 import Foundation
 import SecuPersoDomain
 
-public final class MockExposureMonitoringService: ExposureMonitoringService, @unchecked Sendable {
-    private let coordinator: MockDataCoordinator
-    private let streamStore = StreamStore<[ExposureRecord]>(initialValue: [])
-
-    public init(coordinator: MockDataCoordinator) {
-        self.coordinator = coordinator
-    }
-
-    public func refresh() async throws -> [ExposureRecord] {
-        let exposures = try await coordinator.refreshExposures()
-        streamStore.publish(exposures)
-        return exposures
-    }
-
-    public func stream() -> AsyncStream<[ExposureRecord]> {
-        streamStore.makeStream()
-    }
-}
-
 public final class MockLoginActivityService: LoginActivityService, @unchecked Sendable {
     private let coordinator: MockDataCoordinator
     private let streamStore = StreamStore<[LoginEvent]>(initialValue: [])
@@ -68,20 +49,39 @@ public final class MockProviderConnectionService: ProviderConnectionService, Pro
 
     public func beginConnection(for provider: ProviderID) async -> AsyncStream<ProviderConnectionUpdate> {
         AsyncStream { continuation in
-            Task {
-                continuation.yield(ProviderConnectionUpdate(state: .connecting, message: "Opening consent screen..."))
-                try? await Task.sleep(for: .seconds(1))
+            let task = Task {
+                defer { continuation.finish() }
 
-                continuation.yield(ProviderConnectionUpdate(state: .connecting, message: "Granting permissions..."))
-                try? await Task.sleep(for: .seconds(1))
+                do {
+                    continuation.yield(ProviderConnectionUpdate(state: .connecting, message: "Opening consent screen..."))
+                    try await Task.sleep(for: .seconds(1))
+                    try Task.checkCancellation()
 
-                let finalState: ConnectionState = provider == .other ? .error : .connected
-                try? await coordinator.updateProviderState(provider, state: finalState)
-                let finalMessage = finalState == .connected
-                    ? "Provider connected successfully."
-                    : "Provider connection failed in mock flow."
-                continuation.yield(ProviderConnectionUpdate(state: finalState, message: finalMessage))
-                continuation.finish()
+                    continuation.yield(ProviderConnectionUpdate(state: .connecting, message: "Granting permissions..."))
+                    try await Task.sleep(for: .seconds(1))
+                    try Task.checkCancellation()
+
+                    let finalState: ConnectionState = provider == .other ? .error : .connected
+                    try await coordinator.updateProviderState(provider, state: finalState)
+                    let finalMessage = finalState == .connected
+                        ? "Provider connected successfully."
+                        : "Provider connection failed in mock flow."
+                    continuation.yield(ProviderConnectionUpdate(state: finalState, message: finalMessage))
+                } catch is CancellationError {
+                    return
+                } catch {
+                    try? await coordinator.updateProviderState(provider, state: .error)
+                    continuation.yield(
+                        ProviderConnectionUpdate(
+                            state: .error,
+                            message: "Provider connection failed in mock flow."
+                        )
+                    )
+                }
+            }
+
+            continuation.onTermination = { @Sendable _ in
+                task.cancel()
             }
         }
     }

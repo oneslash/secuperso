@@ -324,6 +324,9 @@ final class SecurityConsoleViewModelTests: XCTestCase {
         XCTAssertEqual(exposureID, highExposure.id)
         XCTAssertEqual(viewModel.nextAction.destinationSection, .exposure)
         XCTAssertEqual(viewModel.nextAction.buttonTitle, "Review exposure")
+
+        XCTAssertEqual(viewModel.handleNextActionTap(), .exposure)
+        XCTAssertEqual(viewModel.selectedExposureFindingID, highExposure.id)
     }
 
     func testNextActionFallsBackToSecurityCheckWhenEverythingLooksGood() async {
@@ -588,6 +591,100 @@ final class SecurityConsoleViewModelTests: XCTestCase {
         XCTAssertEqual(providerViewModel.nextAction.buttonTitle, "Connect provider")
         XCTAssertEqual(providerViewModel.nextAction.destinationSection, .integrations)
         XCTAssertEqual(providerViewModel.handleNextActionTap(), .integrations)
+        XCTAssertEqual(providerViewModel.selectedProviderID, .outlook)
+    }
+
+    func testHandleNextActionTapSelectsSuspiciousLoginBeforeNavigating() async {
+        let suspiciousLogin = LoginEvent(
+            id: UUID(),
+            provider: .google,
+            occurredAt: Date(),
+            device: "Unknown",
+            ipAddress: "198.51.100.1",
+            location: "Unknown",
+            reason: "Risky",
+            suspicious: true,
+            expected: false
+        )
+
+        let viewModel = SecurityConsoleViewModel(
+            exposureService: StubExposureService(refreshResult: .success([])),
+            loginActivityService: StubLoginActivityService(refreshResult: .success([suspiciousLogin])),
+            incidentService: StubIncidentService(incidents: []),
+            incidentReadableService: StubIncidentService(incidents: []),
+            providerConnectionService: StubProviderConnectionService(),
+            providerConnectionReadableService: StubProviderConnectionService()
+        )
+
+        await viewModel.refreshAll()
+
+        XCTAssertEqual(viewModel.handleNextActionTap(), .activity)
+        XCTAssertEqual(viewModel.selectedActivityItemID, "login-\(suspiciousLogin.id.uuidString)")
+    }
+
+    func testHandleNextActionTapSelectsOpenIncidentBeforeNavigating() async {
+        let incident = IncidentCase(
+            id: UUID(),
+            title: "Open incident",
+            severity: .high,
+            createdAt: Date(),
+            status: .open,
+            linkedLoginEventID: UUID(),
+            notes: "note",
+            resolvedAt: nil
+        )
+
+        let incidentService = StubIncidentService(incidents: [incident])
+        let viewModel = SecurityConsoleViewModel(
+            exposureService: StubExposureService(refreshResult: .success([])),
+            loginActivityService: StubLoginActivityService(refreshResult: .success([])),
+            incidentService: incidentService,
+            incidentReadableService: incidentService,
+            providerConnectionService: StubProviderConnectionService(),
+            providerConnectionReadableService: StubProviderConnectionService()
+        )
+
+        await viewModel.refreshAll()
+
+        XCTAssertEqual(viewModel.handleNextActionTap(), .activity)
+        XCTAssertEqual(viewModel.selectedActivityItemID, "incident-\(incident.id.uuidString)")
+    }
+
+    func testRunSecurityCheckActionStaysOnOverviewAndTriggersRefresh() async {
+        let refreshCounter = RefreshCounter()
+        let exposureService = StubExposureService(
+            refreshResult: .success([]),
+            onRefresh: {
+                await refreshCounter.increment()
+            }
+        )
+        let loginService = StubLoginActivityService(
+            refreshResult: .success([]),
+            onRefresh: {
+                await refreshCounter.increment()
+            }
+        )
+        let providerService = StubProviderConnectionService(connections: ProviderID.allCases.map {
+            ProviderConnection(id: $0, state: .connected, lastUpdatedAt: Date())
+        })
+
+        let viewModel = SecurityConsoleViewModel(
+            exposureService: exposureService,
+            loginActivityService: loginService,
+            incidentService: StubIncidentService(incidents: []),
+            incidentReadableService: StubIncidentService(incidents: []),
+            providerConnectionService: providerService,
+            providerConnectionReadableService: providerService
+        )
+
+        await viewModel.refreshAll()
+        let refreshCountAfterInitialLoad = await refreshCounter.value
+
+        XCTAssertEqual(viewModel.nextAction.kind, .runSecurityCheck)
+        XCTAssertEqual(viewModel.handleNextActionTap(), .overview)
+
+        let refreshCount = await waitForRefreshCount(refreshCounter, exceeding: refreshCountAfterInitialLoad)
+        XCTAssertGreaterThan(refreshCount, refreshCountAfterInitialLoad)
     }
 
     func testOverviewActivityPreviewItemsAreAttentionFirstAndCapped() async {
@@ -735,6 +832,9 @@ final class SecurityConsoleViewModelTests: XCTestCase {
 
         XCTAssertEqual(viewModel.exposureFindingRows.count, 2)
         XCTAssertEqual(viewModel.exposureFindingRows.map(\.email), ["a@example.com", "b@example.com"])
+        XCTAssertEqual(viewModel.sectionBadgeCounts.activity, 4)
+        XCTAssertEqual(viewModel.sectionBadgeCounts.exposure, 2)
+        XCTAssertEqual(viewModel.sectionBadgeCounts.integrations, 2)
     }
 
     func testActivityFeedIsSortedAndNeedsAttentionFilterIsDefault() async {
@@ -795,6 +895,219 @@ final class SecurityConsoleViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.activityFilter, .needsAttention)
         XCTAssertEqual(viewModel.filteredActivityFeed.count, 2)
         XCTAssertTrue(viewModel.filteredActivityFeed.allSatisfy(\.needsAttention))
+        XCTAssertEqual(viewModel.selectedActivityItemID, "login-\(suspiciousLogin.id.uuidString)")
+    }
+
+    func testActivitySearchNarrowsSelectionToVisibleItems() async {
+        let suspiciousLogin = LoginEvent(
+            id: UUID(),
+            provider: .google,
+            occurredAt: Date(timeIntervalSince1970: 350),
+            device: "MacBook Pro",
+            ipAddress: "198.51.100.2",
+            location: "Paris",
+            reason: "Risky",
+            suspicious: true,
+            expected: false
+        )
+        let incident = IncidentCase(
+            id: UUID(),
+            title: "Password reset required",
+            severity: .high,
+            createdAt: Date(timeIntervalSince1970: 250),
+            status: .open,
+            linkedLoginEventID: suspiciousLogin.id,
+            notes: "note",
+            resolvedAt: nil
+        )
+
+        let viewModel = SecurityConsoleViewModel(
+            exposureService: StubExposureService(refreshResult: .success([])),
+            loginActivityService: StubLoginActivityService(refreshResult: .success([suspiciousLogin])),
+            incidentService: StubIncidentService(incidents: [incident]),
+            incidentReadableService: StubIncidentService(incidents: [incident]),
+            providerConnectionService: StubProviderConnectionService(),
+            providerConnectionReadableService: StubProviderConnectionService()
+        )
+
+        await viewModel.refreshAll()
+
+        viewModel.activityFilter = .all
+        viewModel.activitySearchText = "Password reset"
+
+        XCTAssertEqual(viewModel.filteredActivityFeed.map(\.id), ["incident-\(incident.id.uuidString)"])
+        XCTAssertEqual(viewModel.selectedActivityItemID, "incident-\(incident.id.uuidString)")
+    }
+
+    func testExposureSearchAndFilterNarrowSelectionToVisibleRows() async {
+        let highExposure = ExposureRecord(
+            id: UUID(),
+            email: "owner@example.com",
+            source: "Critical leak",
+            foundAt: Date(timeIntervalSince1970: 300),
+            severity: .high,
+            status: .open,
+            remediation: "Rotate password"
+        )
+        let mediumExposure = ExposureRecord(
+            id: UUID(),
+            email: "other@example.com",
+            source: "Forum leak",
+            foundAt: Date(timeIntervalSince1970: 200),
+            severity: .medium,
+            status: .open,
+            remediation: "Enable MFA"
+        )
+
+        let viewModel = SecurityConsoleViewModel(
+            exposureService: StubExposureService(refreshResult: .success([highExposure, mediumExposure])),
+            loginActivityService: StubLoginActivityService(refreshResult: .success([])),
+            incidentService: StubIncidentService(incidents: []),
+            incidentReadableService: StubIncidentService(incidents: []),
+            providerConnectionService: StubProviderConnectionService(),
+            providerConnectionReadableService: StubProviderConnectionService()
+        )
+
+        await viewModel.refreshAll()
+
+        viewModel.exposureFilter = .atRisk
+        XCTAssertEqual(viewModel.filteredExposureFindingRows.map(\.id), [highExposure.id])
+        XCTAssertEqual(viewModel.selectedExposureFindingID, highExposure.id)
+
+        viewModel.exposureFilter = .allOpen
+        viewModel.exposureSearchText = "Enable MFA"
+        XCTAssertEqual(viewModel.filteredExposureFindingRows.map(\.id), [mediumExposure.id])
+        XCTAssertEqual(viewModel.selectedExposureFindingID, mediumExposure.id)
+    }
+
+    func testActivityInspectorProjectionIncludesLinkedContextAndActions() async throws {
+        let suspiciousLogin = LoginEvent(
+            id: UUID(),
+            provider: .outlook,
+            providerAccountEmail: "owner@example.com",
+            occurredAt: Date(),
+            device: "Windows",
+            ipAddress: "198.51.100.2",
+            location: "Unknown",
+            reason: "Risky",
+            suspicious: true,
+            expected: false
+        )
+
+        let viewModel = SecurityConsoleViewModel(
+            exposureService: StubExposureService(refreshResult: .success([])),
+            loginActivityService: StubLoginActivityService(refreshResult: .success([suspiciousLogin])),
+            incidentService: StubIncidentService(incidents: []),
+            incidentReadableService: StubIncidentService(incidents: []),
+            providerConnectionService: StubProviderConnectionService(),
+            providerConnectionReadableService: StubProviderConnectionService()
+        )
+
+        await viewModel.refreshAll()
+
+        let inspector = try XCTUnwrap(viewModel.selectedActivityInspector)
+        XCTAssertEqual(inspector.id, "login-\(suspiciousLogin.id.uuidString)")
+        XCTAssertEqual(inspector.categoryLabel, "Sign-in")
+        XCTAssertEqual(inspector.actions.count, 2)
+        XCTAssertTrue(inspector.linkedContext?.contains("198.51.100.2") == true)
+    }
+
+    func testExposureInspectorProjectionIncludesMonitoringSummary() async throws {
+        let exposure = ExposureRecord(
+            id: UUID(),
+            email: "owner@example.com",
+            source: "Critical leak",
+            foundAt: Date(timeIntervalSince1970: 400),
+            severity: .critical,
+            status: .open,
+            remediation: "Rotate password"
+        )
+
+        let viewModel = SecurityConsoleViewModel(
+            exposureService: StubExposureService(refreshResult: .success([exposure])),
+            loginActivityService: StubLoginActivityService(refreshResult: .success([])),
+            incidentService: StubIncidentService(incidents: []),
+            incidentReadableService: StubIncidentService(incidents: []),
+            providerConnectionService: StubProviderConnectionService(),
+            providerConnectionReadableService: StubProviderConnectionService()
+        )
+
+        await viewModel.refreshAll()
+
+        let monitoredEmail = MonitoredEmailAddress(
+            id: UUID(),
+            email: "owner@example.com",
+            providerHint: .other,
+            isEnabled: true,
+            createdAt: Date(timeIntervalSince1970: 100),
+            lastCheckedAt: Date(timeIntervalSince1970: 500)
+        )
+
+        let inspector = try XCTUnwrap(viewModel.exposureInspector(monitoredEmails: [monitoredEmail]))
+        XCTAssertEqual(inspector.id, exposure.id)
+        XCTAssertEqual(inspector.relatedOpenFindingCount, 1)
+        XCTAssertTrue(inspector.monitoringSummary.contains("Monitoring enabled"))
+    }
+
+    func testProviderInspectorProjectionExplainsAttentionReason() async throws {
+        let suspiciousLogin = LoginEvent(
+            id: UUID(),
+            provider: .outlook,
+            occurredAt: Date(),
+            device: "Windows",
+            ipAddress: "198.51.100.2",
+            location: "Unknown",
+            reason: "Risky",
+            suspicious: true,
+            expected: false
+        )
+
+        let providerService = StubProviderConnectionService(connections: [
+            ProviderConnection(id: .google, state: .connected, lastUpdatedAt: Date()),
+            ProviderConnection(id: .outlook, state: .disconnected, lastUpdatedAt: Date()),
+            ProviderConnection(id: .other, state: .connected, lastUpdatedAt: Date())
+        ])
+
+        let viewModel = SecurityConsoleViewModel(
+            exposureService: StubExposureService(refreshResult: .success([])),
+            loginActivityService: StubLoginActivityService(refreshResult: .success([suspiciousLogin])),
+            incidentService: StubIncidentService(incidents: []),
+            incidentReadableService: StubIncidentService(incidents: []),
+            providerConnectionService: providerService,
+            providerConnectionReadableService: providerService
+        )
+
+        await viewModel.refreshAll()
+        viewModel.selectProvider(id: .outlook)
+
+        let inspector = try XCTUnwrap(viewModel.selectedProviderInspector)
+        XCTAssertEqual(inspector.id, .outlook)
+        XCTAssertTrue(inspector.attentionReason?.contains("Reconnect") == true)
+    }
+
+    func testSecurityConsoleErrorProvidesContextualTitlesAndRecoverySuggestions() {
+        let contexts: [SecurityConsoleError.Context] = [
+            .refreshAll,
+            .setScenario,
+            .beginConnectFlow,
+            .disconnectProvider,
+            .markLoginAsExpected,
+            .saveExposureSourceConfiguration,
+            .createIncident,
+            .resolveIncident,
+            .loadStaticData,
+            .reloadConnections,
+            .unknown
+        ]
+
+        for context in contexts {
+            let error = SecurityConsoleError(context: context, message: "problem")
+            XCTAssertFalse(error.title.isEmpty)
+            XCTAssertFalse(error.recoverySuggestion.isEmpty)
+            if context != .unknown {
+                XCTAssertNotEqual(error.title, "Unexpected error")
+            }
+        }
     }
 
     func testAccountCardsAggregateSuspiciousCountsAndConnectionState() async throws {
@@ -998,6 +1311,31 @@ final class SecurityConsoleViewModelTests: XCTestCase {
 
         return condition()
     }
+
+    private func waitForRefreshCount(
+        _ counter: RefreshCounter,
+        exceeding baseline: Int,
+        timeoutNanoseconds: UInt64 = 1_000_000_000
+    ) async -> Int {
+        let step: UInt64 = 20_000_000
+        var remaining = timeoutNanoseconds
+
+        while remaining > 0 {
+            let current = await counter.value
+            if current > baseline {
+                return current
+            }
+
+            try? await Task.sleep(nanoseconds: step)
+            if remaining > step {
+                remaining -= step
+            } else {
+                remaining = 0
+            }
+        }
+
+        return await counter.value
+    }
 }
 
 private struct StubError: Error, LocalizedError {
@@ -1024,15 +1362,31 @@ private final class EventCounter {
     }
 }
 
+private actor RefreshCounter {
+    private(set) var value = 0
+
+    func increment() {
+        value += 1
+    }
+}
+
 private final class StubExposureService: ExposureMonitoringService, @unchecked Sendable {
     let refreshResult: Result<[ExposureRecord], Error>
+    let onRefresh: (@Sendable () async -> Void)?
 
-    init(refreshResult: Result<[ExposureRecord], Error>) {
+    init(
+        refreshResult: Result<[ExposureRecord], Error>,
+        onRefresh: (@Sendable () async -> Void)? = nil
+    ) {
         self.refreshResult = refreshResult
+        self.onRefresh = onRefresh
     }
 
     func refresh() async throws -> [ExposureRecord] {
-        try refreshResult.get()
+        if let onRefresh {
+            await onRefresh()
+        }
+        return try refreshResult.get()
     }
 
     func stream() -> AsyncStream<[ExposureRecord]> {
@@ -1044,13 +1398,21 @@ private final class StubExposureService: ExposureMonitoringService, @unchecked S
 
 private final class StubLoginActivityService: LoginActivityService, @unchecked Sendable {
     let refreshResult: Result<[LoginEvent], Error>
+    let onRefresh: (@Sendable () async -> Void)?
 
-    init(refreshResult: Result<[LoginEvent], Error>) {
+    init(
+        refreshResult: Result<[LoginEvent], Error>,
+        onRefresh: (@Sendable () async -> Void)? = nil
+    ) {
         self.refreshResult = refreshResult
+        self.onRefresh = onRefresh
     }
 
     func refresh() async throws -> [LoginEvent] {
-        try refreshResult.get()
+        if let onRefresh {
+            await onRefresh()
+        }
+        return try refreshResult.get()
     }
 
     func stream() -> AsyncStream<[LoginEvent]> {

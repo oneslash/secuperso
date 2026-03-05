@@ -17,11 +17,12 @@ final class ExposureViewModelTests: XCTestCase {
             }
         )
 
-        viewModel.addMonitoredEmail(email: "owner@example.com", providerHint: .google)
+        viewModel.addMonitoredEmail(email: "owner@example.com")
         try? await Task.sleep(for: .milliseconds(50))
 
         XCTAssertEqual(viewModel.monitoredEmails.count, 1)
         XCTAssertEqual(viewModel.monitoredEmails.first?.email, "owner@example.com")
+        XCTAssertEqual(viewModel.monitoredEmails.first?.providerHint, .other)
         let refreshCount = await refreshCounter.value
         XCTAssertEqual(refreshCount, 1)
     }

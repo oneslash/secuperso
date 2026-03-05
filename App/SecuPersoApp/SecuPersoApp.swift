@@ -171,12 +171,6 @@ private struct SecurityConsoleCommands: Commands {
             }
             .keyboardShortcut("4", modifiers: [.command])
             .disabled(viewModel == nil)
-
-            Button("Show Settings") {
-                selectedSection = .settings
-            }
-            .keyboardShortcut("5", modifiers: [.command])
-            .disabled(viewModel == nil)
         }
     }
 }

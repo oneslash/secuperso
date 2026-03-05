@@ -13,17 +13,36 @@ public final class SecurityConsoleViewModel: ObservableObject {
     public private(set) var riskSnapshot = RiskSnapshot(score: 0, level: .low, lastUpdatedAt: Date())
     public private(set) var timelineEvents: [TimelineEvent] = []
     @Published public private(set) var overviewSummary = SecurityConsoleViewModel.defaultOverviewSummary()
+    @Published public private(set) var overviewRiskDrivers: [OverviewRiskDriver] = []
     @Published public private(set) var nextAction = SecurityConsoleViewModel.defaultNextAction()
     @Published public private(set) var accountCards: [AccountCardSummary] = []
     @Published public private(set) var exposureSummary = SecurityConsoleViewModel.defaultExposureSummary()
     @Published public private(set) var openExposureFindings: [ExposureFindingsGroup] = []
     @Published public private(set) var exposureFindingRows: [ExposureFindingsProjectionRow] = []
     @Published public private(set) var overviewSignals = SecurityConsoleViewModel.defaultOverviewSignalsProjection()
+    @Published public private(set) var sectionBadgeCounts = SecurityConsoleViewModel.defaultSectionBadgeCounts()
     @Published public private(set) var activityFeed: [ActivityFeedItem] = []
     @Published public private(set) var activityPreview: [ActivityPreviewProjection] = []
     @Published public private(set) var pendingConfirmationAction: PendingConfirmationAction?
+    @Published public var activityFilter: ActivityFeedFilter = .needsAttention {
+        didSet { syncActivitySelection() }
+    }
+    @Published public var activitySearchText: String = "" {
+        didSet { syncActivitySelection() }
+    }
+    @Published public private(set) var selectedActivityItemID: String?
+    @Published public var exposureFilter: ExposureFindingFilter = .allOpen {
+        didSet { syncExposureSelection() }
+    }
+    @Published public var exposureSearchText: String = "" {
+        didSet { syncExposureSelection() }
+    }
+    @Published public private(set) var selectedExposureFindingID: UUID?
+    @Published public var providerSearchText: String = "" {
+        didSet { syncProviderSelection() }
+    }
+    @Published public private(set) var selectedProviderID: ProviderID?
 
-    @Published public var activityFilter: ActivityFeedFilter = .needsAttention
     @Published public var scenario: FixtureScenario = .moderate
     @Published public private(set) var isRefreshing = false
     @Published public private(set) var lastRefreshAt: Date?
@@ -32,6 +51,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
     @Published public var oauthSheetProvider: ProviderID?
     @Published public private(set) var oauthState: ConnectionState = .disconnected
     @Published public private(set) var oauthStatusMessage: String = "Provider disconnected."
+    @Published public private(set) var providerActionInFlightID: ProviderID?
 
     private let exposureService: any ExposureMonitoringService
     private let loginActivityService: any LoginActivityService
@@ -76,16 +96,91 @@ public final class SecurityConsoleViewModel: ObservableObject {
     }
 
     public var filteredActivityFeed: [ActivityFeedItem] {
+        let scopedItems: [ActivityFeedItem]
         switch activityFilter {
         case .needsAttention:
-            return activityFeed.filter(\.needsAttention)
+            scopedItems = activityFeed.filter(\.needsAttention)
         case .all:
-            return activityFeed
+            scopedItems = activityFeed
+        }
+
+        let query = normalizedQuery(activitySearchText)
+        guard !query.isEmpty else {
+            return scopedItems
+        }
+
+        return scopedItems.filter { item in
+            [item.title, item.detail]
+                .joined(separator: " ")
+                .localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    public var filteredExposureFindingRows: [ExposureFindingsProjectionRow] {
+        let scopedRows: [ExposureFindingsProjectionRow]
+        switch exposureFilter {
+        case .atRisk:
+            scopedRows = exposureFindingRows.filter { isAtRisk($0.severity) }
+        case .allOpen:
+            scopedRows = exposureFindingRows
+        }
+
+        let query = normalizedQuery(exposureSearchText)
+        guard !query.isEmpty else {
+            return scopedRows
+        }
+
+        return scopedRows.filter { row in
+            [row.email, row.source, row.remediation]
+                .joined(separator: " ")
+                .localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    public var filteredAccountCards: [AccountCardSummary] {
+        let query = normalizedQuery(providerSearchText)
+        guard !query.isEmpty else {
+            return accountCards
+        }
+
+        return accountCards.filter { card in
+            let reason = providerAttentionReason(for: card) ?? ""
+            return [card.providerName, card.details, reason]
+                .joined(separator: " ")
+                .localizedCaseInsensitiveContains(query)
         }
     }
 
     public var overviewActivityPreviewItems: [ActivityFeedItem] {
         activityPreview.map(\.item)
+    }
+
+    public var selectedActivityInspector: ActivityInspectorProjection? {
+        guard let selectedActivityItemID,
+              let item = activityFeed.first(where: { $0.id == selectedActivityItemID })
+        else {
+            return nil
+        }
+
+        return buildActivityInspector(for: item)
+    }
+
+    public var selectedProviderInspector: ProviderInspectorProjection? {
+        guard let selectedProviderID,
+              let card = accountCards.first(where: { $0.providerID == selectedProviderID })
+        else {
+            return nil
+        }
+
+        return buildProviderInspector(for: card)
+    }
+
+    public var hasConnectedProviders: Bool {
+        overviewSignals.connectedProviderCount > 0
+    }
+
+    public var hasLoadedSecurityData: Bool {
+        !activityFeed.isEmpty || !exposureFindingRows.isEmpty || !incidents.isEmpty
     }
 
     public init(
@@ -202,6 +297,8 @@ public final class SecurityConsoleViewModel: ObservableObject {
 
     public func beginConnectFlow(for provider: ProviderID) {
         oauthTask?.cancel()
+        selectedProviderID = provider
+        providerActionInFlightID = provider
         oauthSheetProvider = provider
         oauthState = .connecting
         oauthStatusMessage = "Opening consent screen..."
@@ -220,6 +317,11 @@ public final class SecurityConsoleViewModel: ObservableObject {
             }
 
             await self.reloadConnections()
+            await MainActor.run {
+                if self.providerActionInFlightID == provider {
+                    self.providerActionInFlightID = nil
+                }
+            }
         }
     }
 
@@ -227,9 +329,11 @@ public final class SecurityConsoleViewModel: ObservableObject {
         guard oauthSheetProvider != nil || oauthState != .disconnected || oauthStatusMessage != "Provider disconnected." else {
             return
         }
+
         oauthSheetProvider = nil
         oauthState = .disconnected
         oauthStatusMessage = "Provider disconnected."
+        providerActionInFlightID = nil
     }
 
     public func dismissError() {
@@ -240,7 +344,15 @@ public final class SecurityConsoleViewModel: ObservableObject {
     }
 
     public func disconnect(provider: ProviderID) {
+        providerActionInFlightID = provider
+
         Task {
+            defer {
+                if providerActionInFlightID == provider {
+                    providerActionInFlightID = nil
+                }
+            }
+
             do {
                 try await providerConnectionService.disconnect(provider)
                 providerStates[provider] = .disconnected
@@ -335,19 +447,110 @@ public final class SecurityConsoleViewModel: ObservableObject {
 
     public func handleNextActionTap() -> AppSection {
         switch nextAction.kind {
-        case .reviewHighRiskExposure:
-            return .exposure
-        case .reviewSuspiciousLogin, .reviewIncident:
-            activityFilter = .needsAttention
-            return .activity
-        case .connectProvider:
-            return .integrations
+        case let .reviewHighRiskExposure(exposureID):
+            return openExposureWorkspace(preferredFindingID: exposureID)
+        case let .reviewSuspiciousLogin(loginID):
+            return openActivityWorkspace(preferredActivityItemID: activityIdentifier(for: loginID))
+        case let .reviewIncident(incidentID):
+            return openActivityWorkspace(preferredActivityItemID: incidentIdentifier(for: incidentID))
+        case let .connectProvider(providerID):
+            return openIntegrationsWorkspace(preferredProviderID: providerID)
         case .runSecurityCheck:
-            Task {
-                await refreshAll()
-            }
+            runQuickSecurityCheck()
             return .overview
         }
+    }
+
+    public func openActivityWorkspace(preferredActivityItemID: String? = nil) -> AppSection {
+        if preferredActivityItemID == nil, filteredActivityFeed.isEmpty {
+            activitySearchText = ""
+            activityFilter = .needsAttention
+        }
+
+        if let preferredActivityItemID {
+            activitySearchText = ""
+            activityFilter = .needsAttention
+            selectActivityItem(id: preferredActivityItemID)
+        } else {
+            syncActivitySelection()
+        }
+
+        return .activity
+    }
+
+    public func openExposureWorkspace(preferredFindingID: UUID? = nil) -> AppSection {
+        exposureSearchText = ""
+        exposureFilter = .allOpen
+
+        if let preferredFindingID {
+            selectExposureFinding(id: preferredFindingID)
+        } else {
+            syncExposureSelection()
+        }
+
+        return .exposure
+    }
+
+    public func openIntegrationsWorkspace(preferredProviderID: ProviderID? = nil) -> AppSection {
+        if filteredAccountCards.isEmpty {
+            providerSearchText = ""
+        }
+
+        if let preferredProviderID {
+            providerSearchText = ""
+            selectProvider(id: preferredProviderID)
+        } else {
+            syncProviderSelection()
+        }
+
+        return .integrations
+    }
+
+    public func openHighestPriorityExposure() -> AppSection {
+        openExposureWorkspace(preferredFindingID: highestPriorityExposureID)
+    }
+
+    public func openSuspiciousSignIns() -> AppSection {
+        openActivityWorkspace(preferredActivityItemID: newestSuspiciousLoginActivityID)
+    }
+
+    public func openOpenIncidents() -> AppSection {
+        openActivityWorkspace(preferredActivityItemID: newestOpenIncidentActivityID)
+    }
+
+    public func openProviderCoverage() -> AppSection {
+        openIntegrationsWorkspace(preferredProviderID: firstDisconnectedProviderID)
+    }
+
+    public func runQuickSecurityCheck() {
+        Task {
+            await refreshAll()
+        }
+    }
+
+    public func selectActivityItem(id: String?) {
+        selectedActivityItemID = id
+        syncActivitySelection()
+    }
+
+    public func selectExposureFinding(id: UUID?) {
+        selectedExposureFindingID = id
+        syncExposureSelection()
+    }
+
+    public func selectProvider(id: ProviderID?) {
+        selectedProviderID = id
+        syncProviderSelection()
+    }
+
+    public func exposureInspector(monitoredEmails: [MonitoredEmailAddress]) -> ExposureInspectorProjection? {
+        guard let selectedExposureFindingID,
+              let row = exposureFindingRows.first(where: { $0.id == selectedExposureFindingID })
+        else {
+            return nil
+        }
+
+        return buildExposureInspector(for: row, monitoredEmails: monitoredEmails)
     }
 
     public func createIncident(for login: LoginEvent) {
@@ -542,7 +745,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
     private func rebuildTimelineEvents() {
         let exposureEvents = exposures.map {
             TimelineEvent(
-                id: "exposure-\($0.id.uuidString)",
+                id: exposureIdentifier(for: $0.id),
                 kind: .exposure,
                 title: "\($0.severity.rawValue.capitalized) exposure",
                 details: "\($0.email) from \($0.source)",
@@ -552,7 +755,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
 
         let loginTimeline = loginEvents.map {
             TimelineEvent(
-                id: "login-\($0.id.uuidString)",
+                id: activityIdentifier(for: $0.id),
                 kind: .login,
                 title: "\($0.provider.displayName) sign-in",
                 details: "\($0.location) · \($0.device)",
@@ -562,7 +765,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
 
         let incidentTimeline = incidents.map {
             TimelineEvent(
-                id: "incident-\($0.id.uuidString)",
+                id: incidentIdentifier(for: $0.id),
                 kind: .incident,
                 title: $0.title,
                 details: "Status: \($0.status.rawValue)",
@@ -640,6 +843,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
         let projectedActivityFeed = buildActivityFeed()
         let projectedOverviewSignals = buildOverviewSignalsProjection(accountCards: projectedAccountCards)
         let projectedOverviewSummary = buildOverviewSummary(signals: projectedOverviewSignals)
+        let projectedOverviewRiskDrivers = buildOverviewRiskDrivers(signals: projectedOverviewSignals, summary: projectedExposureSummary)
         let projectedActivityPreview = buildActivityPreview(from: projectedActivityFeed)
         let projectedNextAction = buildNextAction()
 
@@ -650,8 +854,15 @@ public final class SecurityConsoleViewModel: ObservableObject {
         activityFeed = projectedActivityFeed
         overviewSignals = projectedOverviewSignals
         overviewSummary = projectedOverviewSummary
+        overviewRiskDrivers = projectedOverviewRiskDrivers
         activityPreview = projectedActivityPreview
         nextAction = projectedNextAction
+        sectionBadgeCounts = SectionBadgeCounts(
+            activity: projectedActivityFeed.filter(\.needsAttention).count,
+            exposure: projectedExposureFindingRows.count,
+            integrations: projectedAccountCards.filter(\.needsAttention).count
+        )
+        syncSelections()
         onViewProjectionsRebuilt?()
     }
 
@@ -696,9 +907,83 @@ public final class SecurityConsoleViewModel: ObservableObject {
         )
     }
 
+    private func buildOverviewRiskDrivers(
+        signals: OverviewSignalsProjection,
+        summary: ExposureSummary
+    ) -> [OverviewRiskDriver] {
+        var drivers: [OverviewRiskDriver] = []
+
+        if summary.highRiskOpenCount > 0 {
+            drivers.append(
+                OverviewRiskDriver(
+                    id: "exposures-critical",
+                    title: "High-priority exposures",
+                    detail: "\(summary.highRiskOpenCount) exposure alert(s) need urgent review.",
+                    emphasis: .critical
+                )
+            )
+        } else if summary.openCount > 0 {
+            drivers.append(
+                OverviewRiskDriver(
+                    id: "exposures-open",
+                    title: "Open exposure alerts",
+                    detail: "\(summary.openCount) exposure alert(s) are still open.",
+                    emphasis: .caution
+                )
+            )
+        }
+
+        if signals.suspiciousSignInCount > 0 {
+            drivers.append(
+                OverviewRiskDriver(
+                    id: "signins-suspicious",
+                    title: "Suspicious sign-ins",
+                    detail: "\(signals.suspiciousSignInCount) sign-in(s) need confirmation.",
+                    emphasis: .critical
+                )
+            )
+        }
+
+        if signals.openIncidentCount > 0 {
+            drivers.append(
+                OverviewRiskDriver(
+                    id: "incidents-open",
+                    title: "Open incidents",
+                    detail: "\(signals.openIncidentCount) incident(s) remain unresolved.",
+                    emphasis: .caution
+                )
+            )
+        }
+
+        if signals.connectedProviderCount < signals.totalProviderCount {
+            let disconnectedCount = max(0, signals.totalProviderCount - signals.connectedProviderCount)
+            drivers.append(
+                OverviewRiskDriver(
+                    id: "providers-coverage",
+                    title: "Provider coverage gap",
+                    detail: "\(disconnectedCount) provider connection(s) are still missing.",
+                    emphasis: .caution
+                )
+            )
+        }
+
+        if drivers.isEmpty {
+            drivers.append(
+                OverviewRiskDriver(
+                    id: "healthy-state",
+                    title: "Current coverage looks stable",
+                    detail: "No open exposures, suspicious sign-ins, or connection gaps are driving the score.",
+                    emphasis: .calm
+                )
+            )
+        }
+
+        return Array(drivers.prefix(3))
+    }
+
     private func buildExposureSummary() -> ExposureSummary {
         let openExposures = exposures.filter { $0.status == .open }
-        let highRiskOpenCount = openExposures.filter { $0.severity == .critical || $0.severity == .high }.count
+        let highRiskOpenCount = openExposures.filter { isAtRisk($0.severity) }.count
         let affectedEmailCount = Set(openExposures.map(\.email)).count
         let mostRecentAt = openExposures.max(by: { $0.foundAt < $1.foundAt })?.foundAt
 
@@ -728,24 +1013,39 @@ public final class SecurityConsoleViewModel: ObservableObject {
     private func buildOpenExposureFindings() -> [ExposureFindingsGroup] {
         let grouped = Dictionary(grouping: exposures.filter { $0.status == .open }, by: \.email)
         return grouped.keys.sorted().map { email in
-            let findings = (grouped[email] ?? []).sorted(by: { $0.foundAt > $1.foundAt })
+            let findings = (grouped[email] ?? []).sorted(by: { lhs, rhs in
+                if severityRank(lhs.severity) != severityRank(rhs.severity) {
+                    return severityRank(lhs.severity) > severityRank(rhs.severity)
+                }
+                return lhs.foundAt > rhs.foundAt
+            })
             return ExposureFindingsGroup(email: email, findings: findings)
         }
     }
 
     private func buildExposureFindingRows(from groups: [ExposureFindingsGroup]) -> [ExposureFindingsProjectionRow] {
-        groups.flatMap { group in
-            group.findings.map { finding in
-                ExposureFindingsProjectionRow(
-                    id: finding.id,
-                    email: group.email,
-                    source: finding.source,
-                    foundAt: finding.foundAt,
-                    severity: finding.severity,
-                    remediation: finding.remediation
-                )
+        groups
+            .flatMap { group in
+                group.findings.map { finding in
+                    ExposureFindingsProjectionRow(
+                        id: finding.id,
+                        email: group.email,
+                        source: finding.source,
+                        foundAt: finding.foundAt,
+                        severity: finding.severity,
+                        remediation: finding.remediation
+                    )
+                }
             }
-        }
+            .sorted { lhs, rhs in
+                if severityRank(lhs.severity) != severityRank(rhs.severity) {
+                    return severityRank(lhs.severity) > severityRank(rhs.severity)
+                }
+                if lhs.foundAt != rhs.foundAt {
+                    return lhs.foundAt > rhs.foundAt
+                }
+                return lhs.email.localizedCaseInsensitiveCompare(rhs.email) == .orderedAscending
+            }
     }
 
     private func buildAccountCards() -> [AccountCardSummary] {
@@ -755,26 +1055,36 @@ public final class SecurityConsoleViewModel: ObservableObject {
             }
             : providers
 
-        return providerSource.map { provider in
-            let state = providerStates[provider.id] ?? .disconnected
-            let providerLogins = loginEvents
-                .filter { $0.provider == provider.id }
-                .sorted(by: { $0.occurredAt > $1.occurredAt })
+        return providerSource
+            .map { provider in
+                let state = providerStates[provider.id] ?? .disconnected
+                let providerLogins = loginEvents
+                    .filter { $0.provider == provider.id }
+                    .sorted(by: { $0.occurredAt > $1.occurredAt })
 
-            let suspiciousCount = providerLogins.filter { $0.suspicious || !$0.expected }.count
-            let latestLogin = providerLogins.first
+                let suspiciousCount = providerLogins.filter { $0.suspicious || !$0.expected }.count
+                let latestLogin = providerLogins.first
 
-            return AccountCardSummary(
-                providerID: provider.id,
-                providerName: provider.displayName,
-                details: provider.details,
-                connectionState: state,
-                suspiciousLoginCount: suspiciousCount,
-                latestLoginAt: latestLogin?.occurredAt,
-                latestLoginSummary: latestLogin.map { "\($0.location) · \($0.device)" },
-                needsAttention: state != .connected || suspiciousCount > 0
-            )
-        }
+                return AccountCardSummary(
+                    providerID: provider.id,
+                    providerName: provider.displayName,
+                    details: provider.details,
+                    connectionState: state,
+                    suspiciousLoginCount: suspiciousCount,
+                    latestLoginAt: latestLogin?.occurredAt,
+                    latestLoginSummary: latestLogin.map { "\($0.location) · \($0.device)" },
+                    needsAttention: state != .connected || suspiciousCount > 0
+                )
+            }
+            .sorted { lhs, rhs in
+                if lhs.needsAttention != rhs.needsAttention {
+                    return lhs.needsAttention && !rhs.needsAttention
+                }
+                if providerStateRank(lhs.connectionState) != providerStateRank(rhs.connectionState) {
+                    return providerStateRank(lhs.connectionState) < providerStateRank(rhs.connectionState)
+                }
+                return lhs.providerName.localizedCaseInsensitiveCompare(rhs.providerName) == .orderedAscending
+            }
     }
 
     private func buildActivityFeed() -> [ActivityFeedItem] {
@@ -783,7 +1093,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
         let exposureItems = exposures.map { exposure in
             let needsAttention = exposure.status == .open
             let severity: ActivityFeedItem.Severity
-            if exposure.severity == .critical || exposure.severity == .high {
+            if isAtRisk(exposure.severity) {
                 severity = .warning
             } else if exposure.severity == .medium {
                 severity = .caution
@@ -792,7 +1102,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
             }
 
             return ActivityFeedItem(
-                id: "exposure-\(exposure.id.uuidString)",
+                id: exposureIdentifier(for: exposure.id),
                 kind: .exposure,
                 date: exposure.foundAt,
                 title: "Exposure alert for \(exposure.email)",
@@ -829,7 +1139,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
             }
 
             return ActivityFeedItem(
-                id: "login-\(event.id.uuidString)",
+                id: activityIdentifier(for: event.id),
                 kind: .login,
                 date: event.occurredAt,
                 title: "\(event.provider.displayName) sign-in",
@@ -853,7 +1163,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
                 : []
 
             return ActivityFeedItem(
-                id: "incident-\(incident.id.uuidString)",
+                id: incidentIdentifier(for: incident.id),
                 kind: .incident,
                 date: incident.createdAt,
                 title: incident.title,
@@ -882,7 +1192,7 @@ public final class SecurityConsoleViewModel: ObservableObject {
 
     private func buildNextAction() -> NextAction {
         if let exposure = exposures
-            .filter({ $0.status == .open && ($0.severity == .critical || $0.severity == .high) })
+            .filter({ $0.status == .open && isAtRisk($0.severity) })
             .sorted(by: { $0.foundAt > $1.foundAt })
             .first {
             return NextAction(
@@ -939,6 +1249,74 @@ public final class SecurityConsoleViewModel: ObservableObject {
         return SecurityConsoleViewModel.defaultNextAction()
     }
 
+    private func buildActivityInspector(for item: ActivityFeedItem) -> ActivityInspectorProjection {
+        ActivityInspectorProjection(
+            id: item.id,
+            title: item.title,
+            categoryLabel: categoryLabel(for: item.kind),
+            statusText: statusText(for: item),
+            severity: item.severity,
+            detail: item.detail,
+            occurredAt: item.date,
+            linkedContext: linkedContext(for: item),
+            actions: item.actions
+        )
+    }
+
+    private func buildExposureInspector(
+        for row: ExposureFindingsProjectionRow,
+        monitoredEmails: [MonitoredEmailAddress]
+    ) -> ExposureInspectorProjection {
+        let monitoredEmail = monitoredEmails.first {
+            $0.email.localizedCaseInsensitiveCompare(row.email) == .orderedSame
+        }
+
+        let monitoringSummary: String
+        if let monitoredEmail {
+            if monitoredEmail.isEnabled {
+                if let lastCheckedAt = monitoredEmail.lastCheckedAt {
+                    monitoringSummary = "Monitoring enabled. Last checked \(lastCheckedAt.formatted(date: .abbreviated, time: .shortened))."
+                } else {
+                    monitoringSummary = "Monitoring is enabled. The address has not been checked yet."
+                }
+            } else {
+                monitoringSummary = "Monitoring is paused for this address."
+            }
+        } else {
+            monitoringSummary = "This address is not in the monitored email list."
+        }
+
+        let relatedOpenFindingCount = exposureFindingRows.filter {
+            $0.email.localizedCaseInsensitiveCompare(row.email) == .orderedSame
+        }.count
+
+        return ExposureInspectorProjection(
+            id: row.id,
+            email: row.email,
+            source: row.source,
+            severity: row.severity,
+            foundAt: row.foundAt,
+            remediation: row.remediation,
+            monitoringSummary: monitoringSummary,
+            relatedOpenFindingCount: relatedOpenFindingCount
+        )
+    }
+
+    private func buildProviderInspector(for card: AccountCardSummary) -> ProviderInspectorProjection {
+        ProviderInspectorProjection(
+            id: card.providerID,
+            providerName: card.providerName,
+            providerDetails: card.details,
+            connectionState: card.connectionState,
+            statusText: providerStatusText(for: card),
+            attentionReason: providerAttentionReason(for: card),
+            suspiciousLoginCount: card.suspiciousLoginCount,
+            latestLoginSummary: card.latestLoginSummary,
+            latestLoginAt: card.latestLoginAt,
+            coverageSummary: providerCoverageSummary(for: card)
+        )
+    }
+
     private func present(error: any Error, context: SecurityConsoleError.Context) {
         presentedError = SecurityConsoleError(context: context, error: error)
     }
@@ -946,6 +1324,267 @@ public final class SecurityConsoleViewModel: ObservableObject {
     private func loginDetail(for event: LoginEvent) -> String {
         let accountContext = event.providerAccountEmail.map { "\($0) · " } ?? ""
         return "\(accountContext)\(event.location) · \(event.device) · \(event.reason)"
+    }
+
+    private func syncSelections() {
+        syncActivitySelection()
+        syncExposureSelection()
+        syncProviderSelection()
+    }
+
+    private func syncActivitySelection() {
+        let visibleItems = filteredActivityFeed
+        guard let preferredItem = preferredActivityItem(in: visibleItems) else {
+            selectedActivityItemID = nil
+            return
+        }
+
+        if let selectedActivityItemID,
+           visibleItems.contains(where: { $0.id == selectedActivityItemID }) {
+            return
+        }
+
+        selectedActivityItemID = preferredItem.id
+    }
+
+    private func syncExposureSelection() {
+        let visibleRows = filteredExposureFindingRows
+        guard let preferredRow = preferredExposureRow(in: visibleRows) else {
+            selectedExposureFindingID = nil
+            return
+        }
+
+        if let selectedExposureFindingID,
+           visibleRows.contains(where: { $0.id == selectedExposureFindingID }) {
+            return
+        }
+
+        selectedExposureFindingID = preferredRow.id
+    }
+
+    private func syncProviderSelection() {
+        let visibleCards = filteredAccountCards
+        guard let preferredCard = preferredProviderCard(in: visibleCards) else {
+            selectedProviderID = nil
+            return
+        }
+
+        if let selectedProviderID,
+           visibleCards.contains(where: { $0.providerID == selectedProviderID }) {
+            return
+        }
+
+        selectedProviderID = preferredCard.providerID
+    }
+
+    private func preferredActivityItem(in items: [ActivityFeedItem]) -> ActivityFeedItem? {
+        items.first(where: \.needsAttention) ?? items.first
+    }
+
+    private func preferredExposureRow(in rows: [ExposureFindingsProjectionRow]) -> ExposureFindingsProjectionRow? {
+        rows.first(where: { isAtRisk($0.severity) }) ?? rows.first
+    }
+
+    private func preferredProviderCard(in cards: [AccountCardSummary]) -> AccountCardSummary? {
+        cards.first(where: { $0.connectionState != .connected }) ??
+            cards.first(where: \.needsAttention) ??
+            cards.first
+    }
+
+    private func categoryLabel(for kind: ActivityFeedItem.Kind) -> String {
+        switch kind {
+        case .exposure:
+            return "Exposure"
+        case .login:
+            return "Sign-in"
+        case .incident:
+            return "Incident"
+        }
+    }
+
+    private func statusText(for item: ActivityFeedItem) -> String {
+        guard item.needsAttention else {
+            return "Normal"
+        }
+
+        switch item.severity {
+        case .warning:
+            return "At risk"
+        case .caution, .neutral:
+            return "Needs attention"
+        }
+    }
+
+    private func linkedContext(for item: ActivityFeedItem) -> String? {
+        switch item.kind {
+        case .exposure:
+            guard let exposure = exposure(for: item.id) else {
+                return nil
+            }
+            return "Recommended remediation: \(exposure.remediation)"
+        case .login:
+            guard let login = loginEvent(for: item.id) else {
+                return nil
+            }
+            return "IP \(login.ipAddress) · \(login.providerAccountEmail ?? "No labeled account")"
+        case .incident:
+            guard let incident = incident(for: item.id),
+                  let linkedLogin = loginEvents.first(where: { $0.id == incident.linkedLoginEventID })
+            else {
+                return nil
+            }
+            return "Linked sign-in: \(linkedLogin.provider.displayName) from \(linkedLogin.location) on \(linkedLogin.device)"
+        }
+    }
+
+    private func providerStatusText(for card: AccountCardSummary) -> String {
+        if card.connectionState == .connected, card.suspiciousLoginCount > 0 {
+            return "Connected, but recent sign-ins need review"
+        }
+
+        switch card.connectionState {
+        case .connected:
+            return "Connected"
+        case .connecting:
+            return "Connecting"
+        case .error:
+            return "Connection failed"
+        case .disconnected:
+            return "Disconnected"
+        }
+    }
+
+    private func providerAttentionReason(for card: AccountCardSummary) -> String? {
+        switch (card.connectionState, card.suspiciousLoginCount) {
+        case (.disconnected, let suspiciousCount) where suspiciousCount > 0:
+            return "Reconnect this provider and review \(suspiciousCount) suspicious sign-in(s)."
+        case (.disconnected, _):
+            return "Connect this provider to restore monitoring coverage."
+        case (.error, _):
+            return "The most recent connection attempt failed. Retry the provider connection."
+        case (.connected, let suspiciousCount) where suspiciousCount > 0:
+            return "\(suspiciousCount) recent sign-in(s) need investigation."
+        default:
+            return nil
+        }
+    }
+
+    private func providerCoverageSummary(for card: AccountCardSummary) -> String {
+        if card.connectionState == .connected {
+            return card.suspiciousLoginCount == 0
+                ? "Connected and contributing full monitoring coverage."
+                : "Connected, but recent sign-ins are affecting trust in this provider."
+        }
+
+        return "Coverage is incomplete until this provider is connected."
+    }
+
+    private var highestPriorityExposureID: UUID? {
+        exposures
+            .filter { $0.status == .open }
+            .sorted { lhs, rhs in
+                if severityRank(lhs.severity) != severityRank(rhs.severity) {
+                    return severityRank(lhs.severity) > severityRank(rhs.severity)
+                }
+                return lhs.foundAt > rhs.foundAt
+            }
+            .first?
+            .id
+    }
+
+    private var newestSuspiciousLoginActivityID: String? {
+        loginEvents
+            .filter { $0.suspicious || !$0.expected }
+            .sorted(by: { $0.occurredAt > $1.occurredAt })
+            .first
+            .map { activityIdentifier(for: $0.id) }
+    }
+
+    private var newestOpenIncidentActivityID: String? {
+        incidents
+            .filter { $0.status == .open }
+            .sorted(by: { $0.createdAt > $1.createdAt })
+            .first
+            .map { incidentIdentifier(for: $0.id) }
+    }
+
+    private var firstDisconnectedProviderID: ProviderID? {
+        accountCards.first(where: { $0.connectionState != .connected })?.providerID
+    }
+
+    private func normalizedQuery(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func exposureIdentifier(for id: UUID) -> String {
+        "exposure-\(id.uuidString)"
+    }
+
+    private func activityIdentifier(for id: UUID) -> String {
+        "login-\(id.uuidString)"
+    }
+
+    private func incidentIdentifier(for id: UUID) -> String {
+        "incident-\(id.uuidString)"
+    }
+
+    private func exposure(for activityItemID: String) -> ExposureRecord? {
+        guard let id = uuid(from: activityItemID, prefix: "exposure-") else {
+            return nil
+        }
+        return exposures.first(where: { $0.id == id })
+    }
+
+    private func loginEvent(for activityItemID: String) -> LoginEvent? {
+        guard let id = uuid(from: activityItemID, prefix: "login-") else {
+            return nil
+        }
+        return loginEvents.first(where: { $0.id == id })
+    }
+
+    private func incident(for activityItemID: String) -> IncidentCase? {
+        guard let id = uuid(from: activityItemID, prefix: "incident-") else {
+            return nil
+        }
+        return incidents.first(where: { $0.id == id })
+    }
+
+    private func uuid(from value: String, prefix: String) -> UUID? {
+        guard value.hasPrefix(prefix) else {
+            return nil
+        }
+
+        return UUID(uuidString: String(value.dropFirst(prefix.count)))
+    }
+
+    private func isAtRisk(_ severity: ExposureSeverity) -> Bool {
+        severity == .high || severity == .critical
+    }
+
+    private func severityRank(_ severity: ExposureSeverity) -> Int {
+        switch severity {
+        case .critical:
+            return 4
+        case .high:
+            return 3
+        case .medium:
+            return 2
+        case .low:
+            return 1
+        }
+    }
+
+    private func providerStateRank(_ state: ConnectionState) -> Int {
+        switch state {
+        case .error:
+            return 0
+        case .disconnected:
+            return 1
+        case .connecting:
+            return 2
+        case .connected:
+            return 3
+        }
     }
 
     private static func defaultOverviewSummary() -> OverviewSummary {
@@ -987,5 +1626,9 @@ public final class SecurityConsoleViewModel: ObservableObject {
             connectedProviderCount: 0,
             totalProviderCount: 1
         )
+    }
+
+    private static func defaultSectionBadgeCounts() -> SectionBadgeCounts {
+        SectionBadgeCounts(activity: 0, exposure: 0, integrations: 0)
     }
 }

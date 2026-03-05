@@ -16,7 +16,7 @@ public struct SettingsScreen: View {
     public var body: some View {
         Form {
             Section("General") {
-                Text("SecuPerso stores your monitoring data locally and keeps setup intentionally simple.")
+                Text("SecuPerso stores monitoring data locally and keeps setup intentionally focused on provider trust and exposure checks.")
                     .foregroundStyle(.secondary)
             }
 
@@ -32,22 +32,49 @@ public struct SettingsScreen: View {
                     .accessibilityLabel("User-Agent")
 
                 HStack {
-                    Text(exposureSourceConfigured ? "Configured" : "Missing API key")
-                        .foregroundStyle(exposureSourceConfigured ? .green : .secondary)
+                    Label(
+                        exposureSourceConfigured ? "Configured" : "Missing API key",
+                        systemImage: exposureSourceConfigured ? "checkmark.circle.fill" : "exclamationmark.circle"
+                    )
+                    .foregroundStyle(exposureSourceConfigured ? .green : .secondary)
                     Spacer()
-                    Button("Save") {
+                    Button {
                         exposureViewModel.exposureSourceAPIKey = exposureSourceAPIKeyDraft
                         exposureViewModel.exposureSourceUserAgent = exposureSourceUserAgentDraft
                         exposureViewModel.saveExposureSourceConfiguration()
+                    } label: {
+                        if exposureViewModel.isSavingConfiguration {
+                            HStack(spacing: 6) {
+                                ProgressView()
+                                    .controlSize(.small)
+                                Text("Saving")
+                            }
+                        } else {
+                            Text("Save")
+                        }
                     }
+                    .disabled(!canSaveExposureSourceConfiguration)
                 }
 
-                if let inlineStatusMessage = exposureViewModel.inlineStatusMessage {
-                    Text(inlineStatusMessage)
-                        .foregroundStyle(.orange)
+                if let feedback = exposureViewModel.configurationFeedback {
+                    HStack(spacing: 8) {
+                        Image(systemName: feedbackSymbol(feedback))
+                            .foregroundStyle(feedbackColor(feedback))
+
+                        Text(feedback.message)
+                            .foregroundStyle(.primary)
+
+                        Spacer()
+
+                        Button("Dismiss") {
+                            exposureViewModel.clearConfigurationFeedback()
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, 4)
                 }
 
-                Text("Uses Have I Been Pwned API v3 for breach checks.")
+                Text("Uses Have I Been Pwned API v3 for breach checks. Keep the User-Agent present and identifiable when configuring production credentials.")
                     .foregroundStyle(.secondary)
             }
 
@@ -59,12 +86,12 @@ public struct SettingsScreen: View {
                 }
                 .accessibilityLabel("Scenario")
 
-                Text("Switches deterministic fixture sets used for demo sign-in and incident data.")
+                Text("Switches deterministic fixture sets used for demo sign-in and incident data without changing the app structure.")
                     .foregroundStyle(.secondary)
             }
 
             Section("Data Security") {
-                Text("Local data is encrypted in SQLite. The encryption key is stored in Keychain entry com.secuperso.app.db-key.")
+                Text("Local data is encrypted in SQLite. The encryption key is stored in Keychain entry com.secuperso.app.db-key, and provider credentials should stay in the secure store.")
                     .foregroundStyle(.secondary)
             }
         }
@@ -87,8 +114,37 @@ public struct SettingsScreen: View {
         !exposureSourceAPIKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private var canSaveExposureSourceConfiguration: Bool {
+        !exposureSourceUserAgentDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+            !exposureViewModel.isSavingConfiguration
+    }
+
     private func syncDraftsFromViewModel() {
         exposureSourceAPIKeyDraft = exposureViewModel.exposureSourceAPIKey
         exposureSourceUserAgentDraft = exposureViewModel.exposureSourceUserAgent
+    }
+
+    private func feedbackSymbol(_ feedback: OperationFeedback) -> String {
+        switch feedback.tone {
+        case .info:
+            return "info.circle.fill"
+        case .success:
+            return "checkmark.circle.fill"
+        case .warning:
+            return "exclamationmark.circle.fill"
+        case .error:
+            return "xmark.octagon.fill"
+        }
+    }
+
+    private func feedbackColor(_ feedback: OperationFeedback) -> Color {
+        switch feedback.tone {
+        case .info, .success:
+            return .green
+        case .warning:
+            return .orange
+        case .error:
+            return .red
+        }
     }
 }

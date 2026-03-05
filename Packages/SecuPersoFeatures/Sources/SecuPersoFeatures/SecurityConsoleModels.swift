@@ -6,9 +6,8 @@ public enum AppSection: String, CaseIterable, Identifiable, Sendable {
     case activity
     case exposure
     case integrations
-    case settings
 
-    public static let primaryCases: [AppSection] = [.overview, .activity, .exposure, .integrations, .settings]
+    public static let primaryCases: [AppSection] = [.overview, .activity, .exposure, .integrations]
     public static let utilityCases: [AppSection] = []
 
     public var id: String { rawValue }
@@ -23,8 +22,6 @@ public enum AppSection: String, CaseIterable, Identifiable, Sendable {
             return "Exposure"
         case .integrations:
             return "Integrations"
-        case .settings:
-            return "Settings"
         }
     }
 
@@ -38,8 +35,6 @@ public enum AppSection: String, CaseIterable, Identifiable, Sendable {
             return "envelope.badge.shield.half.filled"
         case .integrations:
             return "link.badge.plus"
-        case .settings:
-            return "gearshape"
         }
     }
 }
@@ -56,6 +51,47 @@ public enum ActivityFeedFilter: String, CaseIterable, Identifiable, Sendable {
             return "Needs attention"
         case .all:
             return "All activity"
+        }
+    }
+}
+
+public enum ExposureFindingFilter: String, CaseIterable, Identifiable, Sendable {
+    case atRisk
+    case allOpen
+
+    public var id: String { rawValue }
+
+    public var title: String {
+        switch self {
+        case .atRisk:
+            return "At risk"
+        case .allOpen:
+            return "All open"
+        }
+    }
+}
+
+public struct SectionBadgeCounts: Equatable, Sendable {
+    public let activity: Int
+    public let exposure: Int
+    public let integrations: Int
+
+    public init(activity: Int, exposure: Int, integrations: Int) {
+        self.activity = activity
+        self.exposure = exposure
+        self.integrations = integrations
+    }
+
+    public func value(for section: AppSection) -> Int? {
+        switch section {
+        case .overview:
+            return nil
+        case .activity:
+            return activity
+        case .exposure:
+            return exposure
+        case .integrations:
+            return integrations
         }
     }
 }
@@ -82,6 +118,26 @@ public struct OverviewSummary: Equatable, Sendable {
         self.headline = headline
         self.detail = detail
         self.lastUpdatedAt = lastUpdatedAt
+    }
+}
+
+public struct OverviewRiskDriver: Identifiable, Equatable, Sendable {
+    public enum Emphasis: String, Sendable {
+        case calm
+        case caution
+        case critical
+    }
+
+    public let id: String
+    public let title: String
+    public let detail: String
+    public let emphasis: Emphasis
+
+    public init(id: String, title: String, detail: String, emphasis: Emphasis) {
+        self.id = id
+        self.title = title
+        self.detail = detail
+        self.emphasis = emphasis
     }
 }
 
@@ -218,6 +274,108 @@ public struct ExposureFindingsProjectionRow: Identifiable, Equatable, Sendable {
         self.foundAt = foundAt
         self.severity = severity
         self.remediation = remediation
+    }
+}
+
+public struct ActivityInspectorProjection: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let title: String
+    public let categoryLabel: String
+    public let statusText: String
+    public let severity: ActivityFeedItem.Severity
+    public let detail: String
+    public let occurredAt: Date
+    public let linkedContext: String?
+    public let actions: [ActivityFeedAction]
+
+    public init(
+        id: String,
+        title: String,
+        categoryLabel: String,
+        statusText: String,
+        severity: ActivityFeedItem.Severity,
+        detail: String,
+        occurredAt: Date,
+        linkedContext: String?,
+        actions: [ActivityFeedAction]
+    ) {
+        self.id = id
+        self.title = title
+        self.categoryLabel = categoryLabel
+        self.statusText = statusText
+        self.severity = severity
+        self.detail = detail
+        self.occurredAt = occurredAt
+        self.linkedContext = linkedContext
+        self.actions = actions
+    }
+}
+
+public struct ExposureInspectorProjection: Identifiable, Equatable, Sendable {
+    public let id: UUID
+    public let email: String
+    public let source: String
+    public let severity: ExposureSeverity
+    public let foundAt: Date
+    public let remediation: String
+    public let monitoringSummary: String
+    public let relatedOpenFindingCount: Int
+
+    public init(
+        id: UUID,
+        email: String,
+        source: String,
+        severity: ExposureSeverity,
+        foundAt: Date,
+        remediation: String,
+        monitoringSummary: String,
+        relatedOpenFindingCount: Int
+    ) {
+        self.id = id
+        self.email = email
+        self.source = source
+        self.severity = severity
+        self.foundAt = foundAt
+        self.remediation = remediation
+        self.monitoringSummary = monitoringSummary
+        self.relatedOpenFindingCount = relatedOpenFindingCount
+    }
+}
+
+public struct ProviderInspectorProjection: Identifiable, Equatable, Sendable {
+    public let id: ProviderID
+    public let providerName: String
+    public let providerDetails: String
+    public let connectionState: ConnectionState
+    public let statusText: String
+    public let attentionReason: String?
+    public let suspiciousLoginCount: Int
+    public let latestLoginSummary: String?
+    public let latestLoginAt: Date?
+    public let coverageSummary: String
+
+    public init(
+        id: ProviderID,
+        providerName: String,
+        providerDetails: String,
+        connectionState: ConnectionState,
+        statusText: String,
+        attentionReason: String?,
+        suspiciousLoginCount: Int,
+        latestLoginSummary: String?,
+        latestLoginAt: Date?,
+        coverageSummary: String
+    ) {
+        self.id = id
+        self.providerName = providerName
+        self.providerDetails = providerDetails
+        self.connectionState = connectionState
+        self.statusText = statusText
+        self.attentionReason = attentionReason
+        self.suspiciousLoginCount = suspiciousLoginCount
+        self.latestLoginSummary = latestLoginSummary
+        self.latestLoginAt = latestLoginAt
+        self.coverageSummary = coverageSummary
     }
 }
 
@@ -388,5 +546,76 @@ public struct SecurityConsoleError: Identifiable, Equatable, Sendable {
             message: error.localizedDescription,
             underlyingType: String(reflecting: type(of: error))
         )
+    }
+
+    public var title: String {
+        switch context {
+        case .refreshAll:
+            return "Unable to refresh security data"
+        case .setScenario:
+            return "Unable to switch the demo scenario"
+        case .beginConnectFlow:
+            return "Unable to start provider connection"
+        case .disconnectProvider:
+            return "Unable to disconnect provider"
+        case .markLoginAsExpected:
+            return "Unable to confirm this sign-in"
+        case .saveExposureSourceConfiguration:
+            return "Unable to save exposure source settings"
+        case .createIncident:
+            return "Unable to create incident"
+        case .resolveIncident:
+            return "Unable to resolve incident"
+        case .loadStaticData:
+            return "Unable to load secure workspace"
+        case .reloadConnections:
+            return "Unable to reload provider connections"
+        case .unknown:
+            return "Unexpected error"
+        }
+    }
+
+    public var recoverySuggestion: String {
+        switch context {
+        case .refreshAll:
+            return "Check your provider connections and try refreshing again."
+        case .setScenario:
+            return "Keep the current mock scenario selected, then try switching again."
+        case .beginConnectFlow:
+            return "Retry the provider connection. If it keeps failing, verify the provider settings."
+        case .disconnectProvider:
+            return "Retry the disconnect action. The provider may still be connected."
+        case .markLoginAsExpected:
+            return "Leave the sign-in flagged for review until it can be confirmed."
+        case .saveExposureSourceConfiguration:
+            return "Verify the API key and User-Agent, then save again."
+        case .createIncident:
+            return "Retry incident creation after reviewing the suspicious sign-in details."
+        case .resolveIncident:
+            return "Keep the incident open until the action succeeds."
+        case .loadStaticData:
+            return "Retry loading the app. If the issue persists, check local data and configuration."
+        case .reloadConnections:
+            return "Retry after a refresh to confirm the latest provider status."
+        case .unknown:
+            return "Retry the action. If the issue persists, inspect the underlying configuration."
+        }
+    }
+}
+
+public struct OperationFeedback: Equatable, Sendable {
+    public enum Tone: String, Sendable {
+        case info
+        case success
+        case warning
+        case error
+    }
+
+    public let tone: Tone
+    public let message: String
+
+    public init(tone: Tone, message: String) {
+        self.tone = tone
+        self.message = message
     }
 }

@@ -17,42 +17,42 @@ public enum DesignTokens {
 
     public static var canvas: Color {
         dynamicColor(
-            light: NSColor(calibratedRed: 0.965, green: 0.972, blue: 0.984, alpha: 1),
-            dark: NSColor(calibratedRed: 0.11, green: 0.12, blue: 0.14, alpha: 1)
+            light: NSColor(calibratedRed: 0.949, green: 0.958, blue: 0.972, alpha: 1),
+            dark: NSColor(calibratedRed: 0.105, green: 0.115, blue: 0.132, alpha: 1)
         )
     }
 
     public static var surfacePrimary: Color {
         dynamicColor(
-            light: NSColor(calibratedWhite: 1.0, alpha: 0.96),
-            dark: NSColor(calibratedRed: 0.17, green: 0.18, blue: 0.2, alpha: 1)
+            light: NSColor(calibratedWhite: 1.0, alpha: 0.98),
+            dark: NSColor(calibratedRed: 0.155, green: 0.168, blue: 0.188, alpha: 1)
         )
     }
 
     public static var surfaceSecondary: Color {
         dynamicColor(
-            light: NSColor(calibratedWhite: 1.0, alpha: 0.9),
-            dark: NSColor(calibratedRed: 0.15, green: 0.16, blue: 0.18, alpha: 1)
+            light: NSColor(calibratedRed: 0.972, green: 0.978, blue: 0.988, alpha: 1),
+            dark: NSColor(calibratedRed: 0.132, green: 0.145, blue: 0.164, alpha: 1)
         )
     }
 
     public static var surfaceTertiary: Color {
         dynamicColor(
-            light: NSColor(calibratedWhite: 1.0, alpha: 0.86),
-            dark: NSColor(calibratedRed: 0.19, green: 0.2, blue: 0.22, alpha: 1)
+            light: NSColor(calibratedRed: 0.955, green: 0.963, blue: 0.978, alpha: 1),
+            dark: NSColor(calibratedRed: 0.176, green: 0.19, blue: 0.21, alpha: 1)
         )
     }
 
     public static var borderSubtle: Color {
-        textPrimary.opacity(0.07)
+        textPrimary.opacity(0.11)
     }
 
     public static var borderStrong: Color {
-        textPrimary.opacity(0.14)
+        textPrimary.opacity(0.18)
     }
 
     public static var cardShadowColor: Color {
-        Color.black.opacity(0.05)
+        Color.black.opacity(0.08)
     }
 
     public static var canvasWarm: Color {
@@ -88,7 +88,7 @@ public enum DesignTokens {
     }
 
     public static var headlineLarge: Font {
-        .title2.weight(.semibold)
+        .title2.weight(.bold)
     }
 
     public static var headlineMedium: Font {
@@ -100,7 +100,7 @@ public enum DesignTokens {
     }
 
     public static var heroDisplay: Font {
-        .title2.weight(.semibold)
+        .system(.title, design: .rounded).weight(.bold)
     }
 
     public static var heroScore: Font {
@@ -116,7 +116,7 @@ public enum DesignTokens {
     }
 
     public static var caption: Font {
-        .caption
+        .footnote
     }
 
     public static var appBackground: Color {

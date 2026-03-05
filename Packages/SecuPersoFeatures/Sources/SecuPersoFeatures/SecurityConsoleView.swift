@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import SecuPersoUI
 
@@ -21,9 +22,12 @@ public struct SecurityConsoleView: View {
     public var body: some View {
         NavigationSplitView {
             List(selection: selectedSectionProxy) {
-                ForEach(AppSection.allCases) { section in
-                    Label(section.title, systemImage: section.symbol)
-                        .font(.body.weight(section == selectedSection ? .semibold : .regular))
+                ForEach(AppSection.primaryCases) { section in
+                    SidebarDestinationRow(
+                        section: section,
+                        badgeCount: viewModel.sectionBadgeCounts.value(for: section),
+                        isSelected: section == selectedSection
+                    )
                         .tag(section)
                 }
             }
@@ -37,24 +41,13 @@ public struct SecurityConsoleView: View {
                 )
                 .navigationTitle(selectedSection.title)
                 .toolbar {
-                    ToolbarItemGroup(placement: .primaryAction) {
-                        if let lastRefreshAt = viewModel.lastRefreshAt {
-                            Label("Last check \(lastRefreshAt, style: .time)", systemImage: "clock")
-                                .font(DesignTokens.caption)
-                            .foregroundStyle(DesignTokens.textSecondary)
-                        }
-
-                        if viewModel.isRefreshing {
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-
-                        Button {
+                    ToolbarItem(placement: .primaryAction) {
+                        RefreshToolbarControls(
+                            lastRefreshAt: viewModel.lastRefreshAt,
+                            isRefreshing: viewModel.isRefreshing
+                        ) {
                             Task { await viewModel.refreshAll() }
-                        } label: {
-                            Label("Refresh", systemImage: "arrow.clockwise")
                         }
-                        .disabled(viewModel.isRefreshing)
                     }
                 }
         }
@@ -72,7 +65,7 @@ public struct SecurityConsoleView: View {
     private var contentView: some View {
         switch selectedSection {
         case .overview:
-            OverviewScreen(viewModel: viewModel) { destination in
+            OverviewScreen(viewModel: viewModel, exposureViewModel: exposureViewModel) { destination in
                 selectedSectionProxy.wrappedValue = destination
             }
         case .activity:
@@ -81,8 +74,6 @@ public struct SecurityConsoleView: View {
             ExposureScreen(viewModel: viewModel, exposureViewModel: exposureViewModel)
         case .integrations:
             IntegrationsScreen(viewModel: viewModel)
-        case .settings:
-            SettingsScreen(viewModel: viewModel, exposureViewModel: exposureViewModel)
         }
     }
 
@@ -92,6 +83,156 @@ public struct SecurityConsoleView: View {
 
     private var selectedSection: AppSection {
         selectedSectionProxy.wrappedValue
+    }
+}
+
+private struct SidebarDestinationRow: View {
+    let section: AppSection
+    let badgeCount: Int?
+    let isSelected: Bool
+
+    var body: some View {
+        HStack(spacing: DesignTokens.spacingS) {
+            Label(section.title, systemImage: section.symbol)
+                .font(.body.weight(isSelected ? .semibold : .regular))
+
+            Spacer(minLength: 0)
+
+            if let badgeCount, badgeCount > 0 {
+                Text("\(badgeCount)")
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule()
+                            .fill(badgeBackgroundColor)
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(badgeBorderColor, lineWidth: DesignTokens.borderWidth)
+                    )
+                    .foregroundStyle(badgeForegroundColor)
+                    .accessibilityLabel("\(badgeCount) items")
+            }
+        }
+    }
+
+    private var badgeForegroundColor: Color {
+        isSelected ? .white : DesignTokens.textPrimary
+    }
+
+    private var badgeBackgroundColor: Color {
+        isSelected ? .white.opacity(0.18) : DesignTokens.surfaceSecondary
+    }
+
+    private var badgeBorderColor: Color {
+        isSelected ? .white.opacity(0.42) : DesignTokens.borderStrong
+    }
+}
+
+private struct RefreshToolbarControls: View {
+    let lastRefreshAt: Date?
+    let isRefreshing: Bool
+    let refreshAction: () -> Void
+
+    var body: some View {
+        HStack(spacing: DesignTokens.spacingXS) {
+            if let lastRefreshAt {
+                LastRefreshIndicator(lastRefreshAt: lastRefreshAt, isRefreshing: isRefreshing)
+            }
+
+            Button(action: refreshAction) {
+                HStack(spacing: DesignTokens.spacingXXS) {
+                    if isRefreshing {
+                        ProgressView()
+                            .controlSize(.mini)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    Text(isRefreshing ? "Refreshing" : "Refresh")
+                }
+                .font(DesignTokens.caption.weight(.semibold))
+                .foregroundStyle(DesignTokens.textPrimary)
+                .padding(.horizontal, DesignTokens.spacingS)
+                .padding(.vertical, DesignTokens.spacingXS)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            DesignTokens.brandTeal.opacity(0.2),
+                            DesignTokens.brandTeal.opacity(0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    in: Capsule()
+                )
+                .overlay(
+                    Capsule()
+                        .strokeBorder(DesignTokens.brandTeal.opacity(0.35), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .help("Refresh now")
+            .accessibilityLabel("Refresh data")
+            .disabled(isRefreshing)
+        }
+    }
+}
+
+private struct LastRefreshIndicator: View {
+    let lastRefreshAt: Date
+    let isRefreshing: Bool
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            HStack(spacing: DesignTokens.spacingXS) {
+                Circle()
+                    .fill(isRefreshing ? DesignTokens.brandTeal : DesignTokens.brandTeal.opacity(0.65))
+                    .frame(width: 7, height: 7)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(isRefreshing ? "Syncing..." : "Synced \(relativeRefreshText(reference: context.date))")
+                        .font(DesignTokens.caption.weight(.semibold))
+                        .foregroundStyle(DesignTokens.textPrimary)
+                        .monospacedDigit()
+
+                    Text(absoluteRefreshText)
+                        .font(.caption2)
+                        .foregroundStyle(DesignTokens.textSecondary)
+                }
+            }
+            .padding(.horizontal, DesignTokens.spacingS)
+            .padding(.vertical, DesignTokens.spacingXS)
+            .background(DesignTokens.surfacePrimary, in: Capsule())
+            .overlay(
+                Capsule()
+                    .strokeBorder(DesignTokens.borderSubtle, lineWidth: 1)
+            )
+            .shadow(color: DesignTokens.cardShadowColor, radius: 4, y: 1)
+            .help("Last check \(lastRefreshAt.formatted(date: .abbreviated, time: .shortened))")
+        }
+    }
+
+    private var absoluteRefreshText: String {
+        if Calendar.current.isDateInToday(lastRefreshAt) {
+            return "Today at \(lastRefreshAt.formatted(date: .omitted, time: .shortened))"
+        }
+        return lastRefreshAt.formatted(date: .abbreviated, time: .shortened)
+    }
+
+    private func relativeRefreshText(reference: Date) -> String {
+        let elapsedSeconds = max(0, Int(reference.timeIntervalSince(lastRefreshAt).rounded(.down)))
+
+        if elapsedSeconds < 5 {
+            return "just now"
+        }
+        if elapsedSeconds < 60 {
+            return "\(elapsedSeconds)s ago"
+        }
+
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: lastRefreshAt, relativeTo: reference)
     }
 }
 
@@ -145,7 +286,7 @@ private extension View {
                 .padding(22)
             }
             .alert(
-                "Unexpected Error",
+                viewModel.presentedError?.title ?? "Unexpected error",
                 isPresented: Binding(
                     get: { viewModel.presentedError != nil },
                     set: { newValue in
@@ -159,7 +300,11 @@ private extension View {
             ) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text(viewModel.presentedError?.message ?? "Unknown error")
+                if let error = viewModel.presentedError {
+                    Text("\(error.message)\n\n\(error.recoverySuggestion)")
+                } else {
+                    Text("Unknown error")
+                }
             }
     }
 }

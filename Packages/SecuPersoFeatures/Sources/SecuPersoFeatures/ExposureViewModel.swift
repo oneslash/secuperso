@@ -7,7 +7,11 @@ public final class ExposureViewModel: ObservableObject {
     public var exposureSourceAPIKey: String = ""
     public var exposureSourceUserAgent: String = "SecuPersoApp/1.0"
     @Published public private(set) var isWorking = false
-    @Published public var inlineStatusMessage: String?
+    @Published public private(set) var isSavingConfiguration = false
+    @Published public private(set) var isUpdatingMonitoredEmails = false
+    @Published public private(set) var configurationFeedback: OperationFeedback?
+    @Published public private(set) var monitoredEmailsFeedback: OperationFeedback?
+    @Published public private(set) var monitoredEmailComposerFocusToken = UUID()
 
     private let monitoredEmailService: any MonitoredEmailService
     private let exposureConfigurationService: any ExposureSourceConfigurationService
@@ -16,6 +20,10 @@ public final class ExposureViewModel: ObservableObject {
 
     public var exposureSourceConfigured: Bool {
         !exposureSourceAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    public var inlineStatusMessage: String? {
+        monitoredEmailsFeedback?.message ?? configurationFeedback?.message
     }
 
     public init(
@@ -49,73 +57,128 @@ public final class ExposureViewModel: ObservableObject {
             exposureSourceUserAgent = configuration.userAgent
             monitoredEmails = try await monitoredEmailService.listMonitoredEmails()
         } catch {
-            inlineStatusMessage = error.localizedDescription
+            monitoredEmailsFeedback = OperationFeedback(tone: .error, message: error.localizedDescription)
         }
     }
 
     public func saveExposureSourceConfiguration() {
         Task {
-            isWorking = true
-            defer { isWorking = false }
+            beginConfigurationWork()
+            defer { endConfigurationWork() }
 
             do {
-                inlineStatusMessage = nil
+                configurationFeedback = nil
                 let configuration = ExposureSourceConfiguration(
                     apiKey: exposureSourceAPIKey,
                     userAgent: exposureSourceUserAgent
                 )
                 try await exposureConfigurationService.saveConfiguration(configuration)
                 await refreshAction()
+                configurationFeedback = OperationFeedback(
+                    tone: .success,
+                    message: "Exposure source settings saved."
+                )
             } catch {
-                inlineStatusMessage = error.localizedDescription
+                configurationFeedback = OperationFeedback(tone: .error, message: error.localizedDescription)
             }
         }
     }
 
-    public func addMonitoredEmail(email: String, providerHint: ProviderID) {
+    public func addMonitoredEmail(email: String) {
         Task {
-            isWorking = true
-            defer { isWorking = false }
+            beginMonitoredEmailWork()
+            defer { endMonitoredEmailWork() }
 
             do {
-                inlineStatusMessage = nil
-                _ = try await monitoredEmailService.addMonitoredEmail(email, providerHint: providerHint)
+                monitoredEmailsFeedback = nil
+                _ = try await monitoredEmailService.addMonitoredEmail(email, providerHint: .other)
                 monitoredEmails = try await monitoredEmailService.listMonitoredEmails()
                 await refreshAction()
+                monitoredEmailsFeedback = OperationFeedback(
+                    tone: .success,
+                    message: "Added \(email) to monitored emails."
+                )
             } catch {
-                inlineStatusMessage = error.localizedDescription
+                monitoredEmailsFeedback = OperationFeedback(tone: .error, message: error.localizedDescription)
             }
         }
     }
 
     public func setMonitoredEmailEnabled(id: UUID, isEnabled: Bool) {
         Task {
+            beginMonitoredEmailWork()
+            defer { endMonitoredEmailWork() }
+
             do {
-                inlineStatusMessage = nil
+                monitoredEmailsFeedback = nil
                 try await monitoredEmailService.setMonitoredEmailEnabled(id: id, isEnabled: isEnabled)
                 monitoredEmails = try await monitoredEmailService.listMonitoredEmails()
                 if isEnabled {
                     await refreshAction()
                 }
+                monitoredEmailsFeedback = OperationFeedback(
+                    tone: .info,
+                    message: isEnabled ? "Monitoring resumed for this email." : "Monitoring paused for this email."
+                )
             } catch {
-                inlineStatusMessage = error.localizedDescription
+                monitoredEmailsFeedback = OperationFeedback(tone: .error, message: error.localizedDescription)
             }
         }
     }
 
     public func removeMonitoredEmail(id: UUID) {
         Task {
+            beginMonitoredEmailWork()
+            defer { endMonitoredEmailWork() }
+
             do {
-                inlineStatusMessage = nil
+                monitoredEmailsFeedback = nil
                 try await monitoredEmailService.removeMonitoredEmail(id: id)
                 monitoredEmails = try await monitoredEmailService.listMonitoredEmails()
+                monitoredEmailsFeedback = OperationFeedback(
+                    tone: .info,
+                    message: "Removed email from monitoring."
+                )
             } catch {
-                inlineStatusMessage = error.localizedDescription
+                monitoredEmailsFeedback = OperationFeedback(tone: .error, message: error.localizedDescription)
             }
         }
     }
 
     public func clearInlineStatusMessage() {
-        inlineStatusMessage = nil
+        configurationFeedback = nil
+        monitoredEmailsFeedback = nil
+    }
+
+    public func clearConfigurationFeedback() {
+        configurationFeedback = nil
+    }
+
+    public func clearMonitoredEmailsFeedback() {
+        monitoredEmailsFeedback = nil
+    }
+
+    public func requestMonitoredEmailComposerFocus() {
+        monitoredEmailComposerFocusToken = UUID()
+    }
+
+    private func beginConfigurationWork() {
+        isSavingConfiguration = true
+        isWorking = true
+    }
+
+    private func endConfigurationWork() {
+        isSavingConfiguration = false
+        isWorking = isUpdatingMonitoredEmails
+    }
+
+    private func beginMonitoredEmailWork() {
+        isUpdatingMonitoredEmails = true
+        isWorking = true
+    }
+
+    private func endMonitoredEmailWork() {
+        isUpdatingMonitoredEmails = false
+        isWorking = isSavingConfiguration
     }
 }

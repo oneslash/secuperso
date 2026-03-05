@@ -3,7 +3,7 @@ import SecuPersoFeatures
 
 final class AppSectionTests: XCTestCase {
     func testPrimaryAndUtilityCasesMatchNavigationModel() {
-        XCTAssertEqual(AppSection.primaryCases, [.overview, .activity, .exposure, .integrations, .settings])
+        XCTAssertEqual(AppSection.primaryCases, [.overview, .activity, .exposure, .integrations])
         XCTAssertEqual(AppSection.utilityCases, [])
     }
 
@@ -19,8 +19,5 @@ final class AppSectionTests: XCTestCase {
 
         XCTAssertEqual(AppSection.integrations.title, "Integrations")
         XCTAssertEqual(AppSection.integrations.symbol, "link.badge.plus")
-
-        XCTAssertEqual(AppSection.settings.title, "Settings")
-        XCTAssertEqual(AppSection.settings.symbol, "gearshape")
     }
 }

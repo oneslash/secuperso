@@ -17,8 +17,13 @@ public struct StatusPill: View {
     }
 
     public var body: some View {
-        Text(text)
-            .font(DesignTokens.caption.weight(.semibold))
+        HStack(spacing: 6) {
+            Image(systemName: symbolName)
+                .font(.caption.weight(.semibold))
+
+            Text(text)
+                .font(DesignTokens.caption.weight(.semibold))
+        }
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
             .foregroundStyle(foregroundColor)
@@ -28,6 +33,19 @@ public struct StatusPill: View {
                 Capsule()
                     .stroke(borderColor, lineWidth: DesignTokens.borderWidth)
             )
+    }
+
+    private var symbolName: String {
+        switch tone {
+        case .neutral:
+            return "info.circle.fill"
+        case .positive:
+            return "checkmark.circle.fill"
+        case .caution:
+            return "exclamationmark.circle.fill"
+        case .critical:
+            return "exclamationmark.triangle.fill"
+        }
     }
 
     private var foregroundColor: Color {

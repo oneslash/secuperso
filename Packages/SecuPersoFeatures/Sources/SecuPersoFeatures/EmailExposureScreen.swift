@@ -4,31 +4,36 @@ import SecuPersoUI
 
 struct ExposureScreen: View {
     @ObservedObject var viewModel: SecurityConsoleViewModel
-    let exposureViewModel: ExposureViewModel
+    @ObservedObject var exposureViewModel: ExposureViewModel
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: DesignTokens.spacingL) {
-                monitoredEmailsSection
-                exposureSummarySection
-                openFindingsSection
-            }
-            .padding(DesignTokens.spacingL)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .background(DesignTokens.appBackground)
-    }
+        VStack(alignment: .leading, spacing: DesignTokens.spacingL) {
+            MonitoredEmailsSection(exposureViewModel: exposureViewModel)
+            exposureSummarySection
 
-    private var monitoredEmailsSection: some View {
-        MonitoredEmailsSection(exposureViewModel: exposureViewModel)
+            HSplitView {
+                findingsWorkspacePane
+                    .frame(minWidth: 360, idealWidth: 400)
+
+                inspectorWorkspacePane
+                    .frame(minWidth: 380, idealWidth: 460, maxWidth: .infinity)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .padding(DesignTokens.spacingL)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(DesignTokens.appBackground)
     }
 
     private var exposureSummarySection: some View {
         SectionContainer(title: "Exposure summary", style: .flat) {
             VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
                 StatusPill(exposureStateLabel, tone: exposureStateTone)
+
                 Text(viewModel.exposureSummary.headline)
                     .font(DesignTokens.headlineMedium)
+                    .foregroundStyle(DesignTokens.textPrimary)
+
                 Text(viewModel.exposureSummary.detail)
                     .font(DesignTokens.body)
                     .foregroundStyle(DesignTokens.mutedForeground)
@@ -48,74 +53,81 @@ struct ExposureScreen: View {
         }
     }
 
-    private var openFindingsSection: some View {
+    private var findingsWorkspacePane: some View {
         SectionContainer(
             title: "Open findings",
-            subtitle: "Review grouped findings and prioritize items at risk.",
+            subtitle: "Search findings, focus at-risk items first, and keep a selected breach in view while triaging.",
             style: .elevated
         ) {
-            if viewModel.openExposureFindings.isEmpty {
-                Text("No open findings.")
-                    .foregroundStyle(DesignTokens.mutedForeground)
-            } else {
-                VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
-                    if viewModel.isRefreshing {
-                        ProgressView("Refreshing findings...")
-                            .controlSize(.small)
-                    }
-
-                    Table(viewModel.exposureFindingRows) {
-                        TableColumn("Email") { finding in
-                            Text(finding.email)
-                                .font(.subheadline.weight(.semibold))
-                        }
-
-                        TableColumn("Source") { finding in
-                            Text(finding.source)
-                                .font(.caption)
-                        }
-
-                        TableColumn("Severity") { finding in
-                            StatusPill(finding.severity.rawValue.capitalized, tone: tone(for: finding.severity))
-                        }
-
-                        TableColumn("Found") { finding in
-                            Text(DisplayDateFormatter.shortDateTime.string(from: finding.foundAt))
-                                .font(.caption)
-                                .foregroundStyle(DesignTokens.mutedForeground)
-                        }
-
-                        TableColumn("Remediation") { finding in
-                            Text(finding.remediation)
-                                .font(.caption)
-                                .foregroundStyle(DesignTokens.mutedForeground)
-                                .lineLimit(2)
+            VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
+                HStack(spacing: DesignTokens.spacingS) {
+                    Picker("Severity", selection: Binding(
+                        get: { viewModel.exposureFilter },
+                        set: { viewModel.exposureFilter = $0 }
+                    )) {
+                        ForEach(ExposureFindingFilter.allCases) { filter in
+                            Text(filter.title).tag(filter)
                         }
                     }
-                    .frame(minHeight: 260)
-                    .padding(DesignTokens.spacingXS)
-                    .background(
-                        RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius, style: .continuous)
-                            .fill(DesignTokens.surfaceTertiary)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius, style: .continuous)
-                            .stroke(DesignTokens.borderSubtle, lineWidth: DesignTokens.borderWidth)
-                    )
+                    .pickerStyle(.segmented)
+
+                    TextField("Search findings", text: Binding(
+                        get: { viewModel.exposureSearchText },
+                        set: { viewModel.exposureSearchText = $0 }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .frame(minWidth: 180)
                 }
+
+                if viewModel.isRefreshing {
+                    ProgressView("Refreshing findings...")
+                        .controlSize(.small)
+                }
+
+                if viewModel.filteredExposureFindingRows.isEmpty {
+                    ExposureEmptyState(
+                        title: exposureViewModel.monitoredEmails.isEmpty ? "Add a monitored email to start exposure checks" : "No findings match this view",
+                        detail: exposureViewModel.monitoredEmails.isEmpty
+                            ? "Use the monitored email section above to add the addresses you want checked."
+                            : "Clear the search or widen the severity filter to review more open findings."
+                    )
+                } else {
+                    List(selection: exposureSelection) {
+                        ForEach(viewModel.filteredExposureFindingRows) { finding in
+                            ExposureFindingRowView(finding: finding)
+                                .tag(finding.id)
+                        }
+                    }
+                    .listStyle(.inset)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+    }
+
+    private var inspectorWorkspacePane: some View {
+        SectionContainer(
+            title: "Finding details",
+            subtitle: "Keep the selected finding in focus while reviewing remediation guidance and monitoring context.",
+            style: .flat
+        ) {
+            if let inspector = viewModel.exposureInspector(monitoredEmails: exposureViewModel.monitoredEmails) {
+                ExposureInspectorView(inspector: inspector)
+            } else {
+                ExposureEmptyState(
+                    title: "Select a finding",
+                    detail: "Choose an open finding to review the breach source, remediation, and monitoring state."
+                )
             }
         }
     }
 
-    private func tone(for severity: ExposureSeverity) -> StatusPillTone {
-        switch severity {
-        case .low:
-            return .positive
-        case .medium:
-            return .caution
-        case .high, .critical:
-            return .critical
-        }
+    private var exposureSelection: Binding<UUID?> {
+        Binding(
+            get: { viewModel.selectedExposureFindingID },
+            set: { viewModel.selectExposureFinding(id: $0) }
+        )
     }
 
     private func exposureMetric(value: Int, label: String) -> some View {
@@ -159,69 +171,45 @@ struct ExposureScreen: View {
 private struct MonitoredEmailsSection: View {
     @ObservedObject var exposureViewModel: ExposureViewModel
     @State private var emailInput: String = ""
-    @State private var providerHint: ProviderID = .other
+    @FocusState private var emailComposerFocused: Bool
 
     var body: some View {
         SectionContainer(
             title: "Monitored emails",
-            subtitle: "Add addresses you want continuously checked for exposure findings.",
+            subtitle: "Manage the addresses that drive continuous exposure checks.",
             style: .inset
         ) {
-            VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
+            VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
                 HStack(spacing: DesignTokens.spacingS) {
                     TextField("Email address", text: $emailInput)
                         .textFieldStyle(.roundedBorder)
                         .autocorrectionDisabled(true)
                         .accessibilityLabel("Email address")
+                        .focused($emailComposerFocused)
 
-                    Picker("Provider", selection: $providerHint) {
-                        Text("Google").tag(ProviderID.google)
-                        Text("Outlook").tag(ProviderID.outlook)
-                        Text("Other").tag(ProviderID.other)
-                    }
-                    .frame(maxWidth: 140)
-                    .accessibilityLabel("Provider")
-
-                    Button("Add") {
-                        exposureViewModel.addMonitoredEmail(email: emailInput, providerHint: providerHint)
+                    Button {
+                        exposureViewModel.addMonitoredEmail(email: emailInput)
                         emailInput = ""
+                    } label: {
+                        if exposureViewModel.isUpdatingMonitoredEmails {
+                            ProgressView()
+                                .controlSize(.small)
+                                .frame(width: 50)
+                        } else {
+                            Text("Add")
+                        }
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(emailInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(
+                        exposureViewModel.isUpdatingMonitoredEmails ||
+                        emailInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    )
                 }
-                .padding(DesignTokens.spacingS)
-                .background(
-                    RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius, style: .continuous)
-                        .fill(DesignTokens.surfaceTertiary)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius, style: .continuous)
-                        .stroke(DesignTokens.borderSubtle, lineWidth: DesignTokens.borderWidth)
-                )
 
-                if let message = exposureViewModel.inlineStatusMessage {
-                    HStack(spacing: DesignTokens.spacingS) {
-                        Text(message)
-                            .font(DesignTokens.caption)
-                            .foregroundStyle(DesignTokens.textPrimary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                        Button("Dismiss") {
-                            exposureViewModel.clearInlineStatusMessage()
-                        }
-                        .buttonStyle(.plain)
-                        .font(DesignTokens.caption.weight(.semibold))
+                if let feedback = exposureViewModel.monitoredEmailsFeedback {
+                    FeedbackBanner(feedback: feedback) {
+                        exposureViewModel.clearMonitoredEmailsFeedback()
                     }
-                    .padding(.horizontal, DesignTokens.spacingS)
-                    .padding(.vertical, DesignTokens.spacingXS)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(DesignTokens.riskAmber.opacity(0.14))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(DesignTokens.riskAmber.opacity(0.26), lineWidth: DesignTokens.borderWidth)
-                    )
                 }
 
                 if exposureViewModel.monitoredEmails.isEmpty {
@@ -229,54 +217,51 @@ private struct MonitoredEmailsSection: View {
                         .foregroundStyle(DesignTokens.mutedForeground)
                         .font(.subheadline)
                 } else {
-                    Table(exposureViewModel.monitoredEmails) {
-                        TableColumn("Email") { monitoredEmail in
-                            Text(monitoredEmail.email)
-                                .font(.subheadline.weight(.semibold))
-                        }
+                    VStack(spacing: DesignTokens.spacingXS) {
+                        ForEach(exposureViewModel.monitoredEmails) { monitoredEmail in
+                            HStack(spacing: DesignTokens.spacingS) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(monitoredEmail.email)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(DesignTokens.textPrimary)
 
-                        TableColumn("Provider") { monitoredEmail in
-                            Text(monitoredEmail.providerHint.displayName)
-                                .font(.caption)
-                        }
-
-                        TableColumn("Last checked") { monitoredEmail in
-                            Text(checkedLabel(for: monitoredEmail.lastCheckedAt))
-                                .font(.caption)
-                                .foregroundStyle(DesignTokens.mutedForeground)
-                        }
-
-                        TableColumn("Enabled") { monitoredEmail in
-                            Toggle("Enabled", isOn: Binding(
-                                get: { monitoredEmail.isEnabled },
-                                set: { isEnabled in
-                                    exposureViewModel.setMonitoredEmailEnabled(id: monitoredEmail.id, isEnabled: isEnabled)
+                                    Text(checkedLabel(for: monitoredEmail.lastCheckedAt))
+                                        .font(DesignTokens.caption)
+                                        .foregroundStyle(DesignTokens.mutedForeground)
                                 }
-                            ))
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                            .accessibilityLabel("Enable monitoring for \(monitoredEmail.email)")
-                        }
 
-                        TableColumn("Actions") { monitoredEmail in
-                            Button("Remove", role: .destructive) {
-                                exposureViewModel.removeMonitoredEmail(id: monitoredEmail.id)
+                                Spacer(minLength: 0)
+
+                                Toggle("Enabled", isOn: Binding(
+                                    get: { monitoredEmail.isEnabled },
+                                    set: { isEnabled in
+                                        exposureViewModel.setMonitoredEmailEnabled(id: monitoredEmail.id, isEnabled: isEnabled)
+                                    }
+                                ))
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                                .disabled(exposureViewModel.isUpdatingMonitoredEmails)
+                                .labelsHidden()
+
+                                Button("Remove", role: .destructive) {
+                                    exposureViewModel.removeMonitoredEmail(id: monitoredEmail.id)
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(exposureViewModel.isUpdatingMonitoredEmails)
                             }
-                            .buttonStyle(.bordered)
+                            .padding(DesignTokens.spacingS)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(DesignTokens.surfaceTertiary)
+                            )
                         }
                     }
-                    .frame(minHeight: 180)
-                    .padding(DesignTokens.spacingXS)
-                    .background(
-                        RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius, style: .continuous)
-                            .fill(DesignTokens.surfaceTertiary)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignTokens.cardCornerRadius, style: .continuous)
-                            .stroke(DesignTokens.borderSubtle, lineWidth: DesignTokens.borderWidth)
-                    )
                 }
             }
+        }
+        .onChange(of: exposureViewModel.monitoredEmailComposerFocusToken) { _, _ in
+            emailComposerFocused = true
         }
     }
 
@@ -285,5 +270,198 @@ private struct MonitoredEmailsSection: View {
             return "Not checked yet"
         }
         return "Checked \(DisplayDateFormatter.shortDateTime.string(from: date))"
+    }
+}
+
+private struct ExposureFindingRowView: View {
+    let finding: ExposureFindingsProjectionRow
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.spacingXS) {
+            HStack(spacing: DesignTokens.spacingS) {
+                Text(finding.email)
+                    .font(DesignTokens.bodyStrong)
+                    .foregroundStyle(DesignTokens.textPrimary)
+
+                Spacer(minLength: 0)
+
+                StatusPill(finding.severity.rawValue.capitalized, tone: tone)
+            }
+
+            Text(finding.source)
+                .font(.subheadline)
+                .foregroundStyle(DesignTokens.textPrimary)
+
+            Text(finding.remediation)
+                .font(DesignTokens.caption)
+                .foregroundStyle(DesignTokens.textSecondary)
+                .lineLimit(2)
+
+            Text(DisplayDateFormatter.shortDateTime.string(from: finding.foundAt))
+                .font(DesignTokens.caption)
+                .foregroundStyle(DesignTokens.textSecondary)
+        }
+        .padding(.vertical, DesignTokens.spacingXS)
+    }
+
+    private var tone: StatusPillTone {
+        switch finding.severity {
+        case .low:
+            return .positive
+        case .medium:
+            return .caution
+        case .high, .critical:
+            return .critical
+        }
+    }
+}
+
+private struct ExposureInspectorView: View {
+    let inspector: ExposureInspectorProjection
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
+            HStack(alignment: .top, spacing: DesignTokens.spacingS) {
+                StatusPill(inspector.severity.rawValue.capitalized, tone: tone)
+
+                Spacer(minLength: 0)
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(inspector.foundAt, style: .relative)
+                        .font(DesignTokens.caption.weight(.semibold))
+                        .foregroundStyle(DesignTokens.textPrimary)
+
+                    Text(inspector.foundAt.formatted(date: .abbreviated, time: .shortened))
+                        .font(DesignTokens.caption)
+                        .foregroundStyle(DesignTokens.textSecondary)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(inspector.email)
+                    .font(DesignTokens.headlineLarge)
+                    .foregroundStyle(DesignTokens.textPrimary)
+
+                Text(inspector.source)
+                    .font(DesignTokens.bodyStrong)
+                    .foregroundStyle(DesignTokens.textSecondary)
+            }
+
+            ExposureDetailBlock(title: "Recommended remediation", value: inspector.remediation)
+            ExposureDetailBlock(title: "Monitoring", value: inspector.monitoringSummary)
+            ExposureDetailBlock(
+                title: "Related open findings",
+                value: "\(inspector.relatedOpenFindingCount) open finding(s) currently affect this address."
+            )
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private var tone: StatusPillTone {
+        switch inspector.severity {
+        case .low:
+            return .positive
+        case .medium:
+            return .caution
+        case .high, .critical:
+            return .critical
+        }
+    }
+}
+
+private struct ExposureEmptyState: View {
+    let title: String
+    let detail: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
+            Text(title)
+                .font(DesignTokens.bodyStrong)
+                .foregroundStyle(DesignTokens.textPrimary)
+
+            Text(detail)
+                .font(DesignTokens.caption)
+                .foregroundStyle(DesignTokens.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.top, DesignTokens.spacingS)
+    }
+}
+
+private struct ExposureDetailBlock: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(DesignTokens.caption.weight(.semibold))
+                .foregroundStyle(DesignTokens.textSecondary)
+
+            Text(value)
+                .font(DesignTokens.body)
+                .foregroundStyle(DesignTokens.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+private struct FeedbackBanner: View {
+    let feedback: OperationFeedback
+    let dismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: DesignTokens.spacingS) {
+            Image(systemName: symbol)
+                .foregroundStyle(color)
+
+            Text(feedback.message)
+                .font(DesignTokens.caption)
+                .foregroundStyle(DesignTokens.textPrimary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button("Dismiss") {
+                dismiss()
+            }
+            .buttonStyle(.plain)
+            .font(DesignTokens.caption.weight(.semibold))
+        }
+        .padding(.horizontal, DesignTokens.spacingS)
+        .padding(.vertical, DesignTokens.spacingXS)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(color.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(color.opacity(0.24), lineWidth: DesignTokens.borderWidth)
+        )
+    }
+
+    private var symbol: String {
+        switch feedback.tone {
+        case .info:
+            return "info.circle.fill"
+        case .success:
+            return "checkmark.circle.fill"
+        case .warning:
+            return "exclamationmark.circle.fill"
+        case .error:
+            return "xmark.octagon.fill"
+        }
+    }
+
+    private var color: Color {
+        switch feedback.tone {
+        case .info:
+            return DesignTokens.brandTeal
+        case .success:
+            return DesignTokens.brandTeal
+        case .warning:
+            return DesignTokens.riskAmber
+        case .error:
+            return DesignTokens.riskRed
+        }
     }
 }

@@ -3,65 +3,55 @@ import SecuPersoDomain
 import SecuPersoUI
 
 struct ActivityScreen: View {
-    @ObservedObject var viewModel: SecurityConsoleViewModel
+    @ObservedObject var viewModel: ActivityViewModel
 
     var body: some View {
-        HSplitView {
-            SectionContainer(
-                title: "Activity timeline",
-                subtitle: "Search and filter events to focus on suspicious activity first.",
-                style: .elevated
-            ) {
-                VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
-                    HStack(spacing: DesignTokens.spacingS) {
-                        Picker("Scope", selection: Binding(
-                            get: { viewModel.activityFilter },
-                            set: { viewModel.activityFilter = $0 }
-                        )) {
-                            ForEach(ActivityFeedFilter.allCases) { filter in
-                                Text(filter.title).tag(filter)
-                            }
-                        }
-                        .pickerStyle(.segmented)
+        let filteredActivityFeed = viewModel.filteredActivityFeed
 
-                        TextField("Search events", text: Binding(
-                            get: { viewModel.activitySearchText },
-                            set: { viewModel.activitySearchText = $0 }
-                        ))
+        HSplitView {
+            VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
+                Text("Activity")
+                    .font(DesignTokens.sectionTitle)
+                    .foregroundStyle(DesignTokens.textPrimary)
+
+                HStack(spacing: DesignTokens.spacingS) {
+                    Picker("Scope", selection: $viewModel.activityFilter) {
+                        ForEach(ActivityFeedFilter.allCases) { filter in
+                            Text(filter.title).tag(filter)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    TextField("Search events", text: $viewModel.activitySearchText)
                         .textFieldStyle(.roundedBorder)
                         .frame(minWidth: 180)
-                    }
-
-                    if viewModel.isRefreshing {
-                        ProgressView("Refreshing events...")
-                            .controlSize(.small)
-                    }
-
-                    if viewModel.filteredActivityFeed.isEmpty {
-                        EmptyWorkspaceState(
-                            title: "No events match this view",
-                            detail: "Try widening the scope or clear the search to review more activity."
-                        )
-                    } else {
-                        List(selection: activitySelection) {
-                            ForEach(viewModel.filteredActivityFeed) { item in
-                                ActivityFeedRowView(item: item)
-                                    .tag(item.id)
-                            }
-                        }
-                        .listStyle(.inset)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+                if viewModel.isRefreshing {
+                    ProgressView("Refreshing events…")
+                        .controlSize(.small)
+                }
+
+                if filteredActivityFeed.isEmpty {
+                    EmptyWorkspaceState(
+                        title: "No events match this view",
+                        detail: "Try widening the scope or clear the search."
+                    )
+                } else {
+                    List(selection: activitySelection) {
+                        ForEach(filteredActivityFeed) { item in
+                            ActivityFeedRowView(item: item)
+                                .tag(item.id)
+                        }
+                    }
+                    .listStyle(.inset)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .frame(minWidth: 360, idealWidth: 400)
 
-            SectionContainer(
-                title: "Event details",
-                subtitle: "Investigate the selected event and take action without leaving the workspace.",
-                style: .flat
-            ) {
+            VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
                 if let inspector = viewModel.selectedActivityInspector {
                     ActivityInspectorView(
                         inspector: inspector,
@@ -70,10 +60,12 @@ struct ActivityScreen: View {
                 } else {
                     EmptyWorkspaceState(
                         title: "Select an event",
-                        detail: "Choose an event from the timeline to review context and actions."
+                        detail: "Choose an event to review context and actions."
                     )
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(.leading, DesignTokens.spacingM)
             .frame(minWidth: 380, idealWidth: 460, maxWidth: .infinity)
         }
         .padding(DesignTokens.spacingL)

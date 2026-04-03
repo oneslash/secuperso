@@ -3,16 +3,11 @@ import SecuPersoDomain
 import SecuPersoUI
 
 struct IntegrationsScreen: View {
-    @ObservedObject var viewModel: SecurityConsoleViewModel
-
-    private let metricColumns = Array(
-        repeating: GridItem(.flexible(minimum: 120), spacing: DesignTokens.spacingS),
-        count: 3
-    )
+    @ObservedObject var viewModel: IntegrationsViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignTokens.spacingL) {
-            providerCoverageSection
+            coverageStrip
 
             HSplitView {
                 providerListPane
@@ -28,71 +23,82 @@ struct IntegrationsScreen: View {
         .background(DesignTokens.appBackground)
     }
 
-    private var providerCoverageSection: some View {
-        SectionContainer(
-            title: "Coverage",
-            subtitle: "Connect providers to improve detection accuracy and keep provider trust in one place.",
-            style: .flat
-        ) {
-            LazyVGrid(columns: metricColumns, spacing: DesignTokens.spacingS) {
-                MetricCardView(
-                    title: "Connected",
-                    value: "\(connectedCount)/\(totalCount)",
-                    subtitle: connectedCount == totalCount ? "Full coverage" : "Needs completion"
-                )
-                MetricCardView(
-                    title: "Needs attention",
-                    value: "\(attentionCount)",
-                    subtitle: attentionCount == 0 ? "All clear" : "Review provider health"
-                )
-                MetricCardView(
-                    title: "Disconnected",
-                    value: "\(disconnectedCount)",
-                    subtitle: disconnectedCount == 0 ? "No gaps" : "Connect remaining providers"
-                )
+    // MARK: Coverage — inline stats, no cards
+
+    private var coverageStrip: some View {
+        HStack(spacing: DesignTokens.spacingXL) {
+            coverageStat(
+                value: "\(connectedCount)/\(totalCount)",
+                label: "connected",
+                detail: connectedCount == totalCount ? "Full coverage" : "Needs completion"
+            )
+            coverageStat(
+                value: "\(attentionCount)",
+                label: "need attention",
+                detail: attentionCount == 0 ? "All clear" : "Review provider health"
+            )
+            coverageStat(
+                value: "\(disconnectedCount)",
+                label: "disconnected",
+                detail: disconnectedCount == 0 ? "No gaps" : "Connect remaining"
+            )
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, DesignTokens.spacingXS)
+    }
+
+    private func coverageStat(value: String, label: String, detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: DesignTokens.spacingXS) {
+                Text(value)
+                    .font(.title3.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(DesignTokens.textPrimary)
+                Text(label)
+                    .font(DesignTokens.caption)
+                    .foregroundStyle(DesignTokens.textSecondary)
             }
+            Text(detail)
+                .font(DesignTokens.caption)
+                .foregroundStyle(DesignTokens.textSecondary)
         }
     }
+
+    // MARK: Provider list — no SectionContainer wrapper
 
     private var providerListPane: some View {
-        SectionContainer(
-            title: "Provider workspace",
-            subtitle: "Search providers, review trust state, and keep one provider selected while connecting or disconnecting.",
-            style: .elevated
-        ) {
-            VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
-                TextField("Search providers", text: Binding(
-                    get: { viewModel.providerSearchText },
-                    set: { viewModel.providerSearchText = $0 }
-                ))
+        let filteredAccountCards = viewModel.filteredAccountCards
+
+        return VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
+            Text("Providers")
+                .font(DesignTokens.sectionTitle)
+                .foregroundStyle(DesignTokens.textPrimary)
+
+            TextField("Search providers", text: $viewModel.providerSearchText)
                 .textFieldStyle(.roundedBorder)
 
-                if viewModel.filteredAccountCards.isEmpty {
-                    IntegrationsEmptyState(
-                        title: "No providers match this view",
-                        detail: "Clear the search to review the full provider list."
-                    )
-                } else {
-                    List(selection: providerSelection) {
-                        ForEach(viewModel.filteredAccountCards) { account in
-                            ProviderSummaryRowView(account: account)
-                                .tag(account.providerID)
-                        }
+            if filteredAccountCards.isEmpty {
+                IntegrationsEmptyState(
+                    title: "No providers match",
+                    detail: "Clear the search to see all providers."
+                )
+            } else {
+                List(selection: providerSelection) {
+                    ForEach(filteredAccountCards) { account in
+                        ProviderSummaryRowView(account: account)
+                            .tag(account.providerID)
                     }
-                    .listStyle(.inset)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
+                .listStyle(.inset)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
+    // MARK: Provider inspector — no SectionContainer wrapper
+
     private var providerInspectorPane: some View {
-        SectionContainer(
-            title: "Provider details",
-            subtitle: "Use this inspector to understand trust, recent activity, and the current connection action.",
-            style: .flat
-        ) {
+        VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
             if let inspector = viewModel.selectedProviderInspector {
                 ProviderInspectorView(
                     inspector: inspector,
@@ -103,10 +109,12 @@ struct IntegrationsScreen: View {
             } else {
                 IntegrationsEmptyState(
                     title: "Select a provider",
-                    detail: "Choose a provider to review its trust state and connection action."
+                    detail: "Choose a provider to review its details."
                 )
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.leading, DesignTokens.spacingM)
     }
 
     private var providerSelection: Binding<ProviderID?> {

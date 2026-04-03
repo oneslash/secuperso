@@ -26,101 +26,101 @@ struct ExposureScreen: View {
     }
 
     private var exposureSummarySection: some View {
-        SectionContainer(title: "Exposure summary", style: .flat) {
-            VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
-                StatusPill(exposureStateLabel, tone: exposureStateTone)
-
-                Text(viewModel.exposureSummary.headline)
-                    .font(DesignTokens.headlineMedium)
+        VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
+            HStack(spacing: DesignTokens.spacingS) {
+                Text("Exposure summary")
+                    .font(DesignTokens.sectionTitle)
                     .foregroundStyle(DesignTokens.textPrimary)
 
-                Text(viewModel.exposureSummary.detail)
-                    .font(DesignTokens.body)
-                    .foregroundStyle(DesignTokens.mutedForeground)
+                StatusPill(exposureStateLabel, tone: exposureStateTone)
+            }
 
-                HStack(spacing: DesignTokens.spacingM) {
-                    exposureMetric(value: viewModel.exposureSummary.openCount, label: "Open alerts")
-                    exposureMetric(value: viewModel.exposureSummary.highRiskOpenCount, label: "High priority")
-                    exposureMetric(value: viewModel.exposureSummary.affectedEmailCount, label: "Affected emails")
-                }
+            Text(viewModel.exposureSummary.headline)
+                .font(DesignTokens.body)
+                .foregroundStyle(DesignTokens.textPrimary)
+
+            HStack(spacing: DesignTokens.spacingXL) {
+                exposureMetric(value: viewModel.exposureSummary.openCount, label: "Open alerts")
+                exposureMetric(value: viewModel.exposureSummary.highRiskOpenCount, label: "High priority")
+                exposureMetric(value: viewModel.exposureSummary.affectedEmailCount, label: "Affected emails")
 
                 if let mostRecentAt = viewModel.exposureSummary.mostRecentAt {
-                    Text("Most recent alert \(mostRecentAt, style: .relative)")
+                    Text("Most recent \(mostRecentAt, style: .relative)")
                         .font(DesignTokens.caption)
                         .foregroundStyle(DesignTokens.mutedForeground)
                 }
+
+                Spacer(minLength: 0)
             }
         }
     }
 
     private var findingsWorkspacePane: some View {
-        SectionContainer(
-            title: "Open findings",
-            subtitle: "Search findings, focus at-risk items first, and keep a selected breach in view while triaging.",
-            style: .elevated
-        ) {
-            VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
-                HStack(spacing: DesignTokens.spacingS) {
-                    Picker("Severity", selection: Binding(
-                        get: { viewModel.exposureFilter },
-                        set: { viewModel.exposureFilter = $0 }
-                    )) {
-                        ForEach(ExposureFindingFilter.allCases) { filter in
-                            Text(filter.title).tag(filter)
-                        }
+        let filteredFindingRows = viewModel.filteredExposureFindingRows
+
+        return VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
+            Text("Open findings")
+                .font(DesignTokens.sectionTitle)
+                .foregroundStyle(DesignTokens.textPrimary)
+
+            HStack(spacing: DesignTokens.spacingS) {
+                Picker("Severity", selection: Binding(
+                    get: { viewModel.exposureFilter },
+                    set: { viewModel.exposureFilter = $0 }
+                )) {
+                    ForEach(ExposureFindingFilter.allCases) { filter in
+                        Text(filter.title).tag(filter)
                     }
-                    .pickerStyle(.segmented)
-
-                    TextField("Search findings", text: Binding(
-                        get: { viewModel.exposureSearchText },
-                        set: { viewModel.exposureSearchText = $0 }
-                    ))
-                    .textFieldStyle(.roundedBorder)
-                    .frame(minWidth: 180)
                 }
+                .pickerStyle(.segmented)
 
-                if viewModel.isRefreshing {
-                    ProgressView("Refreshing findings...")
-                        .controlSize(.small)
-                }
-
-                if viewModel.filteredExposureFindingRows.isEmpty {
-                    ExposureEmptyState(
-                        title: exposureViewModel.monitoredEmails.isEmpty ? "Add a monitored email to start exposure checks" : "No findings match this view",
-                        detail: exposureViewModel.monitoredEmails.isEmpty
-                            ? "Use the monitored email section above to add the addresses you want checked."
-                            : "Clear the search or widen the severity filter to review more open findings."
-                    )
-                } else {
-                    List(selection: exposureSelection) {
-                        ForEach(viewModel.filteredExposureFindingRows) { finding in
-                            ExposureFindingRowView(finding: finding)
-                                .tag(finding.id)
-                        }
-                    }
-                    .listStyle(.inset)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
+                TextField("Search findings", text: Binding(
+                    get: { viewModel.exposureSearchText },
+                    set: { viewModel.exposureSearchText = $0 }
+                ))
+                .textFieldStyle(.roundedBorder)
+                .frame(minWidth: 180)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            if viewModel.isRefreshing {
+                ProgressView("Refreshing findings…")
+                    .controlSize(.small)
+            }
+
+            if filteredFindingRows.isEmpty {
+                ExposureEmptyState(
+                    title: exposureViewModel.monitoredEmails.isEmpty ? "Add a monitored email to start" : "No findings match",
+                    detail: exposureViewModel.monitoredEmails.isEmpty
+                        ? "Use the monitored email section above to add addresses."
+                        : "Clear the search or widen the filter."
+                )
+            } else {
+                List(selection: exposureSelection) {
+                    ForEach(filteredFindingRows) { finding in
+                        ExposureFindingRowView(finding: finding)
+                            .tag(finding.id)
+                    }
+                }
+                .listStyle(.inset)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private var inspectorWorkspacePane: some View {
-        SectionContainer(
-            title: "Finding details",
-            subtitle: "Keep the selected finding in focus while reviewing remediation guidance and monitoring context.",
-            style: .flat
-        ) {
+        VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
             if let inspector = viewModel.exposureInspector(monitoredEmails: exposureViewModel.monitoredEmails) {
                 ExposureInspectorView(inspector: inspector)
             } else {
                 ExposureEmptyState(
                     title: "Select a finding",
-                    detail: "Choose an open finding to review the breach source, remediation, and monitoring state."
+                    detail: "Choose an open finding to review remediation and monitoring."
                 )
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.leading, DesignTokens.spacingM)
     }
 
     private var exposureSelection: Binding<UUID?> {
@@ -133,18 +133,12 @@ struct ExposureScreen: View {
     private func exposureMetric(value: Int, label: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("\(value)")
-                .font(.title3.weight(.semibold))
+                .font(.title3.weight(.semibold).monospacedDigit())
+                .foregroundStyle(DesignTokens.textPrimary)
             Text(label)
                 .font(DesignTokens.caption)
                 .foregroundStyle(DesignTokens.mutedForeground)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, DesignTokens.spacingXS)
-        .padding(.horizontal, DesignTokens.spacingS)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(DesignTokens.surfaceSecondary)
-        )
     }
 
     private var exposureStateLabel: String {
@@ -174,87 +168,85 @@ private struct MonitoredEmailsSection: View {
     @FocusState private var emailComposerFocused: Bool
 
     var body: some View {
-        SectionContainer(
-            title: "Monitored emails",
-            subtitle: "Manage the addresses that drive continuous exposure checks.",
-            style: .inset
-        ) {
-            VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
-                HStack(spacing: DesignTokens.spacingS) {
-                    TextField("Email address", text: $emailInput)
-                        .textFieldStyle(.roundedBorder)
-                        .autocorrectionDisabled(true)
-                        .accessibilityLabel("Email address")
-                        .focused($emailComposerFocused)
+        VStack(alignment: .leading, spacing: DesignTokens.spacingS) {
+            Text("Monitored emails")
+                .font(DesignTokens.sectionTitle)
+                .foregroundStyle(DesignTokens.textPrimary)
 
-                    Button {
-                        exposureViewModel.addMonitoredEmail(email: emailInput)
-                        emailInput = ""
-                    } label: {
-                        if exposureViewModel.isUpdatingMonitoredEmails {
-                            ProgressView()
-                                .controlSize(.small)
-                                .frame(width: 50)
-                        } else {
-                            Text("Add")
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(
-                        exposureViewModel.isUpdatingMonitoredEmails ||
-                        emailInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    )
-                }
+            HStack(spacing: DesignTokens.spacingS) {
+                TextField("Email address", text: $emailInput)
+                    .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled(true)
+                    .accessibilityLabel("Email address")
+                    .focused($emailComposerFocused)
 
-                if let feedback = exposureViewModel.monitoredEmailsFeedback {
-                    FeedbackBanner(feedback: feedback) {
-                        exposureViewModel.clearMonitoredEmailsFeedback()
+                Button {
+                    exposureViewModel.addMonitoredEmail(email: emailInput)
+                    emailInput = ""
+                } label: {
+                    if exposureViewModel.isUpdatingMonitoredEmails {
+                        ProgressView()
+                            .controlSize(.small)
+                            .frame(width: 50)
+                    } else {
+                        Text("Add")
                     }
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(
+                    exposureViewModel.isUpdatingMonitoredEmails ||
+                    emailInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                )
+            }
 
-                if exposureViewModel.monitoredEmails.isEmpty {
-                    Text("No monitored emails configured yet.")
-                        .foregroundStyle(DesignTokens.mutedForeground)
-                        .font(.subheadline)
-                } else {
-                    VStack(spacing: DesignTokens.spacingXS) {
-                        ForEach(exposureViewModel.monitoredEmails) { monitoredEmail in
-                            HStack(spacing: DesignTokens.spacingS) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(monitoredEmail.email)
-                                        .font(.subheadline.weight(.semibold))
-                                        .foregroundStyle(DesignTokens.textPrimary)
+            if let feedback = exposureViewModel.monitoredEmailsFeedback {
+                FeedbackBanner(feedback: feedback) {
+                    exposureViewModel.clearMonitoredEmailsFeedback()
+                }
+            }
 
-                                    Text(checkedLabel(for: monitoredEmail.lastCheckedAt))
-                                        .font(DesignTokens.caption)
-                                        .foregroundStyle(DesignTokens.mutedForeground)
-                                }
+            if exposureViewModel.monitoredEmails.isEmpty {
+                Text("No monitored emails configured yet.")
+                    .foregroundStyle(DesignTokens.mutedForeground)
+                    .font(.subheadline)
+            } else {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(exposureViewModel.monitoredEmails.enumerated()), id: \.element.id) { index, monitoredEmail in
+                        HStack(spacing: DesignTokens.spacingS) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(monitoredEmail.email)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(DesignTokens.textPrimary)
 
-                                Spacer(minLength: 0)
-
-                                Toggle("Enabled", isOn: Binding(
-                                    get: { monitoredEmail.isEnabled },
-                                    set: { isEnabled in
-                                        exposureViewModel.setMonitoredEmailEnabled(id: monitoredEmail.id, isEnabled: isEnabled)
-                                    }
-                                ))
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
-                                .disabled(exposureViewModel.isUpdatingMonitoredEmails)
-                                .labelsHidden()
-
-                                Button("Remove", role: .destructive) {
-                                    exposureViewModel.removeMonitoredEmail(id: monitoredEmail.id)
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                                .disabled(exposureViewModel.isUpdatingMonitoredEmails)
+                                Text(checkedLabel(for: monitoredEmail.lastCheckedAt))
+                                    .font(DesignTokens.caption)
+                                    .foregroundStyle(DesignTokens.mutedForeground)
                             }
-                            .padding(DesignTokens.spacingS)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(DesignTokens.surfaceTertiary)
-                            )
+
+                            Spacer(minLength: 0)
+
+                            Toggle("Enabled", isOn: Binding(
+                                get: { monitoredEmail.isEnabled },
+                                set: { isEnabled in
+                                    exposureViewModel.setMonitoredEmailEnabled(id: monitoredEmail.id, isEnabled: isEnabled)
+                                }
+                            ))
+                            .toggleStyle(.switch)
+                            .controlSize(.small)
+                            .disabled(exposureViewModel.isUpdatingMonitoredEmails)
+                            .labelsHidden()
+
+                            Button("Remove", role: .destructive) {
+                                exposureViewModel.removeMonitoredEmail(id: monitoredEmail.id)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(exposureViewModel.isUpdatingMonitoredEmails)
+                        }
+                        .padding(.vertical, DesignTokens.spacingS)
+
+                        if index < exposureViewModel.monitoredEmails.count - 1 {
+                            Divider()
                         }
                     }
                 }

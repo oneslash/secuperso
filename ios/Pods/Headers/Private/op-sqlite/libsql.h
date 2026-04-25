@@ -1,0 +1,1 @@
+../../../../../node_modules/@op-engineering/op-sqlite/ios/libsql.xcframework/ios-arm64_x86_64-simulator/Headers/libsql.h

@@ -1,0 +1,25 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/MonaSans-Bold.otf",
+      "sha1": "454aa84bc99491a4e36b70c87a202722de5d6e34"
+    },
+    {
+      "path": "assets/fonts/MonaSans-LICENSE.txt",
+      "sha1": "2f7b00d7582825d86502d1894560916f886b497e"
+    },
+    {
+      "path": "assets/fonts/MonaSans-Medium.otf",
+      "sha1": "6202857ee881eff79cffabb301c266852ae41564"
+    },
+    {
+      "path": "assets/fonts/MonaSans-Regular.otf",
+      "sha1": "69bead8144e5a5b8fca2e9a75c0f8ff900421702"
+    },
+    {
+      "path": "assets/fonts/MonaSans-SemiBold.otf",
+      "sha1": "1dadaaa4326f31d529bb02f93206120eb493a399"
+    }
+  ]
+}

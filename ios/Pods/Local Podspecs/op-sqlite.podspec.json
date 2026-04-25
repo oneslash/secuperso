@@ -1,0 +1,70 @@
+{
+  "name": "op-sqlite",
+  "version": "11.4.9",
+  "summary": "Next generation SQLite for React Native",
+  "homepage": "https://github.com/OP-Engineering/op-sqlite#readme",
+  "license": "MIT",
+  "authors": "Oscar Franco <ospfranco@protonmail.com> (https://github.com/ospfranco)",
+  "platforms": {
+    "ios": "13.0",
+    "tvos": "13.0",
+    "osx": "10.15",
+    "visionos": "1.0"
+  },
+  "source": {
+    "git": "https://github.com/op-engineering/op-sqlite.git",
+    "tag": "11.4.9"
+  },
+  "source_files": [
+    "ios/OPSQLite.h",
+    "ios/OPSQLite.mm",
+    "ios/libsql.xcframework/ios-arm64/Headers/libsql.h",
+    "ios/libsql.xcframework/ios-arm64_x86_64-simulator/Headers/libsql.h",
+    "cpp/DBHostObject.cpp",
+    "cpp/DBHostObject.h",
+    "cpp/DumbHostObject.cpp",
+    "cpp/DumbHostObject.h",
+    "cpp/OPThreadPool.cpp",
+    "cpp/OPThreadPool.h",
+    "cpp/PreparedStatementHostObject.cpp",
+    "cpp/PreparedStatementHostObject.h",
+    "cpp/SmartHostObject.cpp",
+    "cpp/SmartHostObject.h",
+    "cpp/bindings.cpp",
+    "cpp/bindings.h",
+    "cpp/bridge.cpp",
+    "cpp/bridge.h",
+    "cpp/libsql/bridge.cpp",
+    "cpp/libsql/bridge.h",
+    "cpp/libsql/libsql.h",
+    "cpp/logs.h",
+    "cpp/macros.h",
+    "cpp/sqlcipher/sqlite3.c",
+    "cpp/sqlcipher/sqlite3.h",
+    "cpp/sqlite3.c",
+    "cpp/sqlite3.h",
+    "cpp/types.h",
+    "cpp/utils.cpp",
+    "cpp/utils.h"
+  ],
+  "dependencies": {
+    "React-callinvoker": [],
+    "React": [],
+    "React-Core": []
+  },
+  "pod_target_xcconfig": {
+    "GCC_PREPROCESSOR_DEFINITIONS": "HAVE_FULLFSYNC=1",
+    "WARNING_CFLAGS": "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations",
+    "CLANG_CXX_LANGUAGE_STANDARD": "c++17",
+    "OTHER_CFLAGS": "-DSQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION=1"
+  },
+  "vendored_frameworks": [],
+  "exclude_files": [
+    "cpp/sqlcipher/sqlite3.c",
+    "cpp/sqlcipher/sqlite3.h",
+    "cpp/libsql/bridge.c",
+    "cpp/libsql/bridge.h",
+    "cpp/libsql/bridge.cpp",
+    "cpp/libsql/libsql.h"
+  ]
+}

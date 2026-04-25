@@ -1,38 +1,38 @@
 # Repository Guidelines
 
 ## Build, Test, and Development Commands
-- `xcodegen generate`: regenerate Xcode project from `project.yml`.
-- `xcodebuild -project SecuPerso.xcodeproj -scheme SecuPerso-Debug -destination 'platform=macOS' build`: compile app and tests.
-- `xcodebuild -project SecuPerso.xcodeproj -scheme SecuPerso-Debug -destination 'platform=macOS' test`: run `SecuPersoTests`.
-- `xcodebuild -project SecuPerso.xcodeproj -scheme SecuPerso-Release -destination 'platform=macOS' build`: release-scheme compile check.
-- `for pkg in SecuPersoDomain SecuPersoData SecuPersoFeatures SecuPersoUI; do swift build --package-path Packages/$pkg; done`: package-level compile checks.
-- If `xcodebuild` fails on CLI tools only setups, point developer tools to full Xcode: `xcode-select -s /Applications/Xcode.app/Contents/Developer`.
+- `npm start`: start Metro bundler.
+- `npx react-native run-ios`: build and run on iOS simulator.
+- `npx react-native run-android`: build and run on Android emulator.
+- `npm test`: run Jest test suite.
+- `npm run lint`: run ESLint across the project.
+- `npm run typecheck`: run TypeScript type checking (`tsc --noEmit`).
 
 ## Coding Style & Naming Conventions
-- Language/toolchain: Swift 6, strict concurrency enabled.
-- Formatting: 4-space indentation, clear line breaks for long initializers, minimal inline comments.
-- Naming: UpperCamelCase for types/protocols (`MockProviderConnectionService`), lowerCamelCase for members (`databaseURL()`).
-- Concurrency: prefer `actor`/`@MainActor` ownership boundaries and `Sendable`-safe APIs across module boundaries.
-- Keep module boundaries explicit: `Domain` has no UI concerns; `UI` stays presentation-only; `Features` should depend on `Domain` abstractions rather than data-layer concrete types.
-- Keep provider identifiers and fixture values aligned (`google`, `outlook`, `other`) when adding provider-related logic.
+- Language/toolchain: TypeScript, React Native, strict mode enabled.
+- Formatting: 2-space indentation, single quotes for strings, no semicolons.
+- Naming: PascalCase for components/types/interfaces, camelCase for functions/variables, UPPER_SNAKE_CASE for constants.
+- State management: Zustand stores in `src/features/stores/`.
+- Keep module boundaries: `domain/` has no UI or data concerns; `data/` depends on `domain`; `features/` depends on `domain` and `ui`; `app/` wires everything together.
+- Provider identifiers: `google`, `outlook`, `other` — keep aligned when adding provider logic.
 
 ## Testing Guidelines
-- Framework: XCTest (`Tests/SecuPersoTests`).
-- Conventions: files end with `Tests.swift`, test classes end with `Tests`, test methods start with `test`.
-- Favor deterministic fixtures and fixed timestamps (for example, a shared `fixedNow`) to avoid flaky tests.
+- Framework: Jest (`__tests__/`).
+- Conventions: files end with `.test.ts` or `.test.tsx`, test suites use `describe`/`it`.
+- Favor deterministic fixtures and fixed timestamps to avoid flaky tests.
 - Add or update tests whenever changing:
-  - risk scoring/projections (`RiskScoringEngine`, `SecurityConsoleViewModel`)
-  - encryption/storage behavior (`EncryptedSQLiteDatabase`, key management, monitored email state)
-  - remote integration flows (HIBP refresh/mapping, Microsoft OAuth exchange/state handling)
+  - risk scoring/projections (`riskScoringEngine`, `securityConsoleStore`)
+  - encryption/storage behavior (`encryptedDatabase`, key management)
+  - remote integration flows (HIBP refresh/mapping, OAuth exchange/state handling)
   - fixture parsing/scenario behavior.
 
 ## Commit & Pull Request Guidelines
-- Use Conventional Commits (for example, `feat(domain): add provider risk weighting`).
+- Use Conventional Commits (for example, `feat(features): add provider risk weighting`).
 - Keep commits focused and atomic; avoid mixing refactors with behavior changes.
-- PRs should include: concise summary, linked issue/task, test evidence (`xcodebuild ... test`), and UI screenshots/gifs for SwiftUI changes.
+- PRs should include: concise summary, linked issue/task, test evidence, and UI screenshots for component changes.
 
 ## Security & Configuration Tips
 - Do not commit real credentials or production PII; keep `Fixtures/` synthetic.
-- Preserve Keychain-backed encryption patterns in `SecuPersoData` (`com.secuperso.app.db-key`, HIBP API key, OAuth token storage).
+- Preserve Keychain-backed encryption patterns in `src/data/` (`com.secuperso.app.db-key`, HIBP API key, OAuth token storage).
 - Keep Microsoft OAuth protections intact (PKCE challenge, state validation, callback scheme validation).
-- Treat `DATA_MODE`/`DATA_MODE_MOCK` as default-safe configuration unless intentionally implementing a non-mock mode.
+- Treat `IS_MOCK_MODE` as default-safe configuration unless intentionally implementing a non-mock mode.

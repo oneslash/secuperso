@@ -7,28 +7,16 @@ Icon?
 .Spotlight-V100
 .Trashes
 
-# Xcode local user state
-xcuserdata/
-*.xcuserdatad/
-*.xcuserstate
-*.xcscmblueprint
-*.xccheckout
-*.moved-aside
+# Node / React Native
+node_modules/
+.expo/
+bundle/
+dist/
 
-# Xcode and Swift build outputs
+# Build outputs
 DerivedData/
 build/
 *.xcresult
-*.xcworkspace/xcuserdata/
-*.xcodeproj/xcuserdata/
-.swiftpm/
-.build/
-**/.swiftpm/
-**/.build/
-
-# Swift Package Manager local resolution files
-Package.resolved
-**/Package.resolved
 
 # Editor/tooling metadata
 .vscode/
@@ -44,3 +32,17 @@ Package.resolved
 .env
 .env.*
 *.local
+
+# React Native specific
+.babel_cache
+.metro-health-check*
+
+# Xcode (legacy - no longer used)
+*.xcworkspace
+*.xcodeproj/
+xcuserdata/
+
+# Swift Package Manager (legacy)
+Package.resolved
+.swiftpm/
+.build/

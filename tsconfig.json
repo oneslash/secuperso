@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@domain/*": ["src/domain/*"],
+      "@data/*": ["src/data/*"],
+      "@ui/*": ["src/ui/*"],
+      "@features/*": ["src/features/*"],
+      "@app/*": ["src/app/*"]
+    }
+  },
+  "include": ["src", "__tests__", "index.js"],
+  "exclude": ["node_modules", "Fixtures"]
+}

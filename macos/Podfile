@@ -1,0 +1,80 @@
+require 'pathname'
+require 'fileutils'
+
+ws_dir = Pathname.new(__dir__)
+ws_dir = ws_dir.parent until
+  File.exist?("#{ws_dir}/node_modules/react-native-macos/scripts/react_native_pods.rb") ||
+  ws_dir.expand_path.to_s == '/'
+require "#{ws_dir}/node_modules/react-native-macos/scripts/react_native_pods.rb"
+
+prepare_react_native_project!
+
+def patch_fmt_for_xcode_26!(installation_root)
+  format_inl_path = installation_root + 'Pods/fmt/include/fmt/format-inl.h'
+  return unless File.exist?(format_inl_path)
+
+  replacements = {
+    'fmt::format_to(it, FMT_STRING("{}{}"), message, SEP);' =>
+      'fmt::format_to(it, fmt::runtime("{}{}"), message, SEP);',
+    'fmt::format_to(it, FMT_STRING("{}{}"), ERROR_STR, error_code);' =>
+      'fmt::format_to(it, fmt::runtime("{}{}"), ERROR_STR, error_code);',
+    'FMT_THROW(system_error(errno, FMT_STRING("cannot write to file")));' =>
+      'FMT_THROW(system_error(errno, fmt::runtime("cannot write to file")));',
+    'out = fmt::format_to(out, FMT_STRING("{:x}"), value);' =>
+      'out = fmt::format_to(out, fmt::runtime("{:x}"), value);',
+    'out = fmt::format_to(out, FMT_STRING("{:08x}"), value);' =>
+      'out = fmt::format_to(out, fmt::runtime("{:08x}"), value);',
+    'out = fmt::format_to(out, FMT_STRING("p{}"),' =>
+      'out = fmt::format_to(out, fmt::runtime("p{}"),',
+    'FMT_THROW(system_error(errno, FMT_STRING("getc failed")));' =>
+      'FMT_THROW(system_error(errno, fmt::runtime("getc failed")));',
+    'FMT_THROW(system_error(errno, FMT_STRING("ungetc failed")));' =>
+      'FMT_THROW(system_error(errno, fmt::runtime("ungetc failed")));'
+  }
+
+  format_inl_contents = File.read(format_inl_path)
+  patched_contents = replacements.reduce(format_inl_contents) do |contents, (before, after)|
+    contents.gsub(before, after)
+  end
+
+  return if patched_contents == format_inl_contents
+
+  FileUtils.chmod('u+w', format_inl_path)
+  File.write(format_inl_path, patched_contents)
+end
+
+target 'secuperso-macOS' do
+  platform :macos, '14.0'
+  use_native_modules!
+
+  # Flags change depending on the env values.
+  flags = get_default_flags()
+
+  use_react_native!(
+    :path => '../node_modules/react-native-macos',
+    :hermes_enabled => false,
+    :fabric_enabled => ENV['RCT_NEW_ARCH_ENABLED'] == '1',
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  post_install do |installer|
+    react_native_post_install(installer)
+    patch_fmt_for_xcode_26!(Pod::Config.instance.installation_root)
+
+    # Xcode 26's libc++/consteval behavior breaks fmt 11 used by RN macOS 0.79.
+    # Force fmt to use its non-consteval path until the dependency is upgraded.
+    installer.pods_project.targets.each do |target|
+      next unless ['fmt', 'RCT-Folly'].include?(target.name)
+
+      target.build_configurations.each do |config|
+        definitions = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || ['$(inherited)']
+        definitions = Array(definitions)
+        next if definitions.include?('FMT_USE_CONSTEVAL=0')
+
+        definitions << 'FMT_USE_CONSTEVAL=0'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = definitions
+      end
+    end
+  end
+end
